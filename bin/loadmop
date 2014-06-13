@@ -1,0 +1,142 @@
+#!/usr/bin/env ruby
+
+require 'bundler'
+Bundler.setup
+Bundler.require(:default)
+
+require 'pathname'
+require 'csv'
+require 'sequelizer/urlifier'
+
+class LoadMOPCli < Thor
+  include Sequelizer
+  desc 'load', 'Connects to database specified in the .env file and loads the OMOP Vocabulary schema'
+  def load
+    Sequel.extension :migration
+    Sequel::Migrator.run(db, 'schemas')
+  end
+
+  desc 'load_data vocab_file_path', 'Connects to database specified in the .env file and loads the OMOP Vocabulary schema and data into it'
+  def load_data(file_path)
+    load
+    fix_data(file_path)
+    fast_load(file_path) || slow_load(file_path)
+  end
+
+  desc 'fix_data file_path', 'The vocab files come with a \'|\' character appended to each line, so we clean this off'
+  def fix_data(file_path)
+    Pathname.glob(file_path + '/*.csv') do |vocab_file|
+      clean_dir = vocab_file.dirname + 'cleaned'
+      clean_dir.mkdir unless clean_dir.exist?
+      clean_file = clean_dir + vocab_file.basename
+      next if clean_file.exist?
+      puts "Cleaning #{vocab_file}"
+      system("head -n 1 #{vocab_file} | sed 's/\|$//' | tr '[A-Z]' '[a-z]' >> #{clean_file}")
+      system("tail -n +2 #{vocab_file} | sed 's/\|$//' >> #{clean_file}")
+    end
+  end
+
+  private
+
+  def fast_load(file_path)
+    case adapter
+    when 'postgres'
+      fast_load_postgres(file_path)
+    when 'sqlite'
+      fast_load_sqlite(file_path)
+    else
+      nil
+    end
+  end
+
+=begin
+This wasn't so fast...
+  def super_fast_load_postgres(file_path)
+    return false if `which pgloader` =~ /not found/i
+    Pathname.glob(Pathname.new(file_path) + 'cleaned' + '*.csv') do |vocab_file|
+      table_name = vocab_file.basename('.*').to_s.downcase.to_sym
+      puts "Loading #{vocab_file} into #{table_name}"
+      File.open('/tmp/pg.load', 'w') do |file|
+        file.puts <<-EOF
+LOAD CSV
+FROM #{vocab_file} WITH ENCODING LATIN-1
+INTO #{db_url}?#{ENV['DB_SEARCH_PATH']}.#{table_name}
+WITH truncate,
+     fields terminated by ',',
+     skip header = 1
+;
+EOF
+      end
+      system('pgloader -v /tmp/pg.load')
+    end
+    true
+  end
+=end
+
+  def fast_load_postgres(file_path)
+    Pathname.glob(Pathname.new(file_path) + 'cleaned' + '*.csv') do |vocab_file|
+      table_name = vocab_file.basename('.*').to_s.downcase.to_sym
+      puts "Loading #{vocab_file} into #{table_name}"
+      headers = headers_for(vocab_file).map(&:to_sym)
+      db[table_name].truncate
+      db.copy_into(
+        table_name,
+        format:  :csv,
+        columns: headers,
+        options: 'header',
+        data:    File.read(vocab_file)
+      )
+    end
+    true
+  end
+
+  def fast_load_sqlite(file_path)
+    return nil if `which sqlite3` =~ /not found/i
+    db_file_path = database
+    Pathname.glob(Pathname.new(file_path) + 'cleaned' + '*.csv') do |vocab_file|
+      File.open('/tmp/sqlite.load', 'w') do |file|
+        table_name = vocab_file.basename('.*').to_s.downcase
+        file.puts %Q(.echo on)
+        file.puts %Q(.log stdout)
+        file.puts %Q(DELETE FROM #{table_name};)
+        file.puts %Q(.mode csv)
+        file.puts ".import #{vocab_file} #{table_name}"
+      end
+      system("sqlite3 #{db_file_path} < /tmp/sqlite.load")
+    end
+    true
+  end
+
+  def slow_load(file_path)
+    Pathname.glob(Pathname.new(file_path) + 'cleaned' + '*.csv') do |vocab_file|
+      table_name = vocab_file.basename('.*').to_s.downcase.to_sym
+      puts "Loading #{vocab_file} into #{table_name}"
+      CSV.open(vocab_file, headers: true) do |csv|
+        csv.each_slice(1000) do |rows|
+          print '.'
+          db[table_name].import(headers_for(vocab_file), rows.map(&:fields))
+        end
+      end
+      puts
+    end
+  end
+
+  def adapter
+    ENV['DB_ADAPTER']
+  end
+
+  def database
+    ENV['DB_DATABASE']
+  end
+
+  def headers_for(file_path)
+    header_line = File.readlines(file_path).first.downcase
+    CSV.parse(header_line).first
+  end
+
+  def db_url
+    Sequelizer::Urlifier.new(fix_options).url.sub('postgres', 'postgresql')
+  end
+end
+
+LoadMOPCli.start(ARGV)
