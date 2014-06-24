@@ -4,14 +4,5 @@ source 'https://rubygems.org'
 gemspec
 gem 'sequelizer', path: '../sequelizer'
 gem 'thor'
-
-require 'dotenv'
-Dotenv.load
-case ENV['DB_ADAPTER']
-when 'postgres'
-  gem 'pg'
-when 'sqlite'
-  gem 'sqlite3'
-else
-  raise "I don't know what gem to use for adapter: '#{ENV['DB_ADAPTER']}'.  Please make sure your .env file is correct!"
-end
+gem 'pg'
+gem 'sqlite3'
