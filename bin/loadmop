@@ -9,20 +9,22 @@ require 'csv'
 
 class LoadMOPCli < Thor
   include Sequelizer
-  desc 'load_vocab_tables', 'Connects to database specified in the .env file and loads the OMOP Vocabulary schema'
-  def load_vocab_tables
+
+  desc 'create_vocab_tables', 'Connects to database specified in the .env file and loads the OMOP Vocabulary schema'
+  def create_vocab_tables
     Sequel.extension :migration
     Sequel::Migrator.run(db, 'schemas/vocabulary', target: 1)
   end
 
-  desc 'load_vocab_data vocab_file_path', 'Connects to database specified in the .env file and loads the OMOP Vocabulary schema and data into it'
-  def load_vocab_data(file_path)
-    load_vocab_tables
+  desc 'create_vocab_database vocab_file_path', 'Connects to database specified in the .env file and loads the OMOP Vocabulary schema and data into it'
+  def create_vocab_database(file_path)
+    create_vocab_tables
     fix_vocab_data(file_path)
     fast_load(file_path) || slow_load(file_path)
+    create_vocab_indexes
   end
 
-  desc 'fix_data file_path', 'The vocab files come with a \'|\' character appended to each line, so we clean this off'
+  desc 'fix_vocab_data vocab_file_path', 'The vocab files come with a \'|\' character appended to each line, so we clean this off'
   def fix_vocab_data(file_path)
     Pathname.glob(file_path + '/*.csv') do |vocab_file|
       clean_dir = vocab_file.dirname + 'cleaned'
@@ -35,14 +37,14 @@ class LoadMOPCli < Thor
     end
   end
 
-  desc 'load_vocab_indexes', 'Loads some indexes into the vocabulary database.  Wait until data is already loaded'
-  def load_vocab_indexes
+  desc 'create_vocab_indexes', 'Loads some indexes into the vocabulary database.  Wait until data is already loaded to ensure loading data is fast'
+  def create_vocab_indexes
     Sequel.extension :migration
     Sequel::Migrator.run(db, 'schemas/vocabulary', target: 2)
   end
 
-  desc 'test_vocab', 'Makes sure conncetion works'
-  def test_vocab
+  desc 'test_connection', 'Makes sure conncetion works'
+  def test_connection
     puts db[:vocabulary].count
   end
 
@@ -58,30 +60,6 @@ class LoadMOPCli < Thor
       nil
     end
   end
-
-=begin
-This wasn't so fast...
-  def super_fast_load_postgres(file_path)
-    return false if `which pgloader` =~ /not found/i
-    Pathname.glob(Pathname.new(file_path) + 'cleaned' + '*.csv') do |vocab_file|
-      table_name = vocab_file.basename('.*').to_s.downcase.to_sym
-      puts "Loading #{vocab_file} into #{table_name}"
-      File.open('/tmp/pg.load', 'w') do |file|
-        file.puts <<-EOF
-LOAD CSV
-FROM #{vocab_file} WITH ENCODING LATIN-1
-INTO #{db_url}?#{ENV['DB_SEARCH_PATH']}.#{table_name}
-WITH truncate,
-     fields terminated by ',',
-     skip header = 1
-;
-EOF
-      end
-      system('pgloader -v /tmp/pg.load')
-    end
-    true
-  end
-=end
 
   def fast_load_postgres(file_path)
     Pathname.glob(Pathname.new(file_path) + 'cleaned' + '*.csv') do |vocab_file|
