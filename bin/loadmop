@@ -113,11 +113,11 @@ class LoadMOPCli < Thor
   end
 
   def adapter
-    db.sequelizer_options['adapter']
+    db.sequelizer_options.adapter
   end
 
   def database
-    db.sequelizer_options['database']
+    db.sequelizer_options.database
   end
 
   def headers_for(file_path)
