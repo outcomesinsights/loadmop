@@ -2,6 +2,12 @@
 
 Helps load up the OMOP Vocabulary files into the database of your choice
 
+## Requirements
+
+- Ruby 2.0+
+- [Bundler](http://bundler.io/)
+- Some sort of RDBMS to store OMOP Vocabulary files in
+
 ## Installation
 
 Clone this repository to where you want it.  I'm not familiar enough with RubyGems to make this a proper program.
@@ -37,6 +43,8 @@ Then:
     - loadmop isn't (yet) cool enough to actually create the database for you
 - Download the [OMOP Vocabulary Files](http://vocabbuild.omop.org/vocabulary-release) and unzip them to some directory.  I recommend you use the restricted files since they include CPT codes and other useful vocabularies.
 - cd into the clone of this repo
+- run `bundle install` to make sure you have all the needed dependencies installed
+- run `bundle exec sequelizer update_gemfile` to ensure your Gemfile has the right database gem
 - You'll probably want to just run `./bin/loadmop create_vocab_database /path/to/directory/holding/unzipped/files`
     - This runs all the steps for creating the vocabulary database, namely
         - Creating the proper tables
@@ -55,6 +63,8 @@ To run an individual command, run `./bin/loadmop` with no arguments to get a hel
 ## Pleas for Help
 
 I've written methods to quickly load the data into PostgreSQL and SQLite, but I don't regularly use many other RDBMSs.  Right now they use a method that should work for all RDBMSs, but is pretty slow.
+
+Some of the faster methods are Unix-only as well.  If there are fast, platform-independent ways to load the data, I'm interested.
 
 Please submit suggestions or pull requests to speed up loading under other RDBMSs and I'll incorporate them.  Thanks!
 
