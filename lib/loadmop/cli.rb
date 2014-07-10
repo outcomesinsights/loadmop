@@ -12,7 +12,7 @@ module Loadmop
       loader.create_database
     end
 
-    desc 'load_cdmv4_data', 'Creates a schema in a database for OMOP CDMv4 then loads data into it as specified by data_files_dir'
+    desc 'create_cdmv4_data data_dir', 'Creates a schema in a database for OMOP CDMv4 then loads data into it as specified by data_files_dir'
     option :schema, type: :string, desc: 'PostgreSQL ONLY - specifies the schema within the database that will house the CDM tables and data'
     def create_cdmv4_database(data_files_dir)
       cdm_loader = CDMv4Loader.new(data_files_dir, options)
