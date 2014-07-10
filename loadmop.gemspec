@@ -8,10 +8,10 @@ Gem::Specification.new do |spec|
   spec.version       = Loadmop::VERSION
   spec.authors       = ['Ryan Duryea']
   spec.email         = ['aguynamedryan@gmail.com']
-  spec.summary       = %q{Ruby-based script to load OMOP Vocabulary into a database}
-  spec.description   = %q{}
-  spec.homepage      = ''
-  spec.license       = 'Apache License, Version 2.0'
+  spec.summary       = %q{Ruby-based script to load OMOP Vocabulary/CDMv4 data into a database}
+  spec.description   = %q{loadmop assits in loading OMOP Vocabulary files and OMOP CDMv4-compatible CSV files into your database}
+  spec.homepage      = 'https://github.com/outcomesinsights/loadmop'
+  spec.license       = 'MIT'
 
   spec.files         = `git ls-files -z`.split("\x0")
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
@@ -19,7 +19,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_development_dependency 'bundler', '~> 1.6'
-  spec.add_dependency 'rake'
-  spec.add_dependency 'thor'
+  spec.add_dependency 'rake', '~> 10.3'
   spec.add_dependency 'sequelizer', '~> 0.0'
+  spec.add_dependency 'thor', '~> 0.19'
 end
