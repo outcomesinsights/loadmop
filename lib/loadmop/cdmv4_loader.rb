@@ -3,16 +3,16 @@ require_relative 'loader'
 module Loadmop
   class CDMv4Loader < Loader
 
-    attr :options, :data_files_dir
-
-    def initialize(data_files_dir, options = {})
-      @data_files_dir = Pathname.new(data_files_dir)
-      @options = options
-      @schemas_dir = 'schemas/cdmv4'
+    def initialize(*args)
+      super(*args)
       set_schema_if_necessary
     end
 
     private
+
+    def schemas_dir
+      'schemas/cdmv4'
+    end
 
     def files
       ordered_file_names.map { |name| data_files_dir + name }.select(&:exist?)

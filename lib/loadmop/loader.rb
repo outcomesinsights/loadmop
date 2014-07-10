@@ -6,7 +6,13 @@ module Loadmop
   class Loader
     include Sequelizer
 
-    attr :schemas_dir
+    attr :options, :data_files_dir, :headers
+
+    def initialize(data_files_dir, options = {})
+      @data_files_dir = Pathname.new(data_files_dir)
+      @options = options
+      @headers = {}
+    end
 
     def create_database
       create_tables
@@ -25,8 +31,8 @@ module Loadmop
       Sequel::Migrator.run(db, schemas_dir, target: 2)
     end
 
-    def files
-      Pathname.glob(data_files_dir + '*.csv')
+    def all_files
+      @all_files ||= make_all_files
     end
 
     def load_files
@@ -45,53 +51,62 @@ module Loadmop
     end
 
     def fast_load_postgres
-      files.each do |file|
-        table_name = file.basename('.*').to_s.downcase.to_sym
-        puts "Loading #{file} into #{table_name}"
-        headers = headers_for(file).map(&:to_sym)
+      all_files.each do |table_name, files|
         db[table_name].truncate(cascade: true)
-        db.copy_into(
-          table_name,
-          format:  :csv,
-          columns: headers,
-          options: 'header',
-          data:    File.read(file)
-        )
+        files.each do |file|
+          puts "Loading #{file} into #{table_name}"
+          db.copy_into(
+            table_name,
+            format:  :csv,
+            columns: headers[table_name],
+            data:    File.read(file)
+          )
+        end
       end
       true
     end
 
     def fast_load_sqlite
       return nil if `which sqlite3` =~ /not found/i
-      db_file_path = database
-      files.each do |file|
-        File.open('/tmp/sqlite.load', 'w') do |command_file|
-          table_name = file.basename('.*').to_s.downcase
+      all_files.each do |table_name, files|
+        run_sqlite_commands(%Q(DELETE FROM #{table_name};))
+        commands = []
+        commands << %Q(.echo on)
+        commands << %Q(.log stdout)
+        commands << %Q(.mode csv)
+        commands << "placeholder"
+        files.each do |file|
           puts "Loading #{file} into #{table_name}"
-          command_file.puts %Q(.echo on)
-          command_file.puts %Q(.log stdout)
-          command_file.puts %Q(DELETE FROM #{table_name};)
-          command_file.puts %Q(.mode csv)
-          command_file.puts ".import /dev/stdin #{table_name}"
+          commands.pop
+          commands << ".import #{file} #{table_name}"
+          run_sqlite_commands(commands)
         end
-        command = "tail -n +2 #{file} | sqlite3 #{db_file_path} '.read /tmp/sqlite.load'"
-        puts command
-        system(command)
       end
       true
     end
 
+    def run_sqlite_commands(*commands)
+      db_file_path = database
+      File.open('/tmp/sqlite.load', 'w') do |command_file|
+        command_file.puts commands.flatten.join("\n")
+      end
+      command = "sqlite3 #{db_file_path} '.read /tmp/sqlite.load'"
+      puts command
+      system(command)
+    end
+
     def slow_load
-      files.each do |file|
-        table_name = file.basename('.*').to_s.downcase.to_sym
-        puts "Loading #{file} into #{table_name}"
-        CSV.open(file, headers: true) do |csv|
-          csv.each_slice(1000) do |rows|
-            print '.'
-            db[table_name].import(headers_for(file), rows.map(&:fields))
+      all_files.each do |table_name, files|
+        files.each do |file|
+          puts "Loading #{file} into #{table_name}"
+          CSV.open(file, headers: true) do |csv|
+            csv.each_slice(1000) do |rows|
+              print '.'
+              db[table_name].import(headers_for(file), rows.map(&:fields))
+            end
           end
+          puts
         end
-        puts
       end
     end
 
@@ -104,8 +119,44 @@ module Loadmop
     end
 
     def headers_for(file)
-      header_line = file.readlines.first.downcase
-      CSV.parse(header_line).first
+      header_line = File.open(file, &:readline).downcase.gsub(/\|$/, '')
+      CSV.parse(header_line).first.map(&:to_sym)
+    end
+
+    def files_of_interest
+      Pathname.glob(data_files_dir + '*.csv')
+    end
+
+    def lines_per_split
+      100000
+    end
+
+    def additional_cleaning_steps
+      []
+    end
+
+    def make_all_files
+      split_dir = data_files_dir + 'split'
+      split_dir.mkdir unless split_dir.exist?
+      files = files_of_interest.map do |file|
+        table_name = file.basename('.*').to_s.downcase.to_sym
+        headers[table_name] = headers_for(file)
+        dir = split_dir + table_name.to_s
+        unless dir.exist?
+          dir.mkdir
+          Dir.chdir(dir) do
+            puts "Splitting #{file}"
+            steps = []
+            steps << "tail -n +2 #{file.expand_path}"
+            steps += additional_cleaning_steps
+            steps << "split -a 5 -l #{lines_per_split}"
+            system(steps.compact.join(" | "))
+          end
+        end
+        [table_name, dir.children.sort]
+      end
+
+      Hash[files]
     end
   end
 end
