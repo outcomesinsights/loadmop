@@ -23,12 +23,12 @@ module Loadmop
     private
     def create_tables
       Sequel.extension :migration
-      Sequel::Migrator.run(db, schemas_dir, target: 1)
+      Sequel::Migrator.run(db, base_dir + schemas_dir, target: 1)
     end
 
     def create_indexes
       Sequel.extension :migration
-      Sequel::Migrator.run(db, schemas_dir, target: 2)
+      Sequel::Migrator.run(db, base_dir + schemas_dir, target: 2)
     end
 
     def all_files
@@ -157,6 +157,13 @@ module Loadmop
       end
 
       Hash[files]
+    end
+
+    # When installed as a gem, we need to find where the gem is installed
+    # and look for files relative to that path.  base_dir returns the
+    # path to the loadmop gem
+    def base_dir
+      Pathname.new(__FILE__).dirname + '../..'
     end
   end
 end
