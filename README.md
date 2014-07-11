@@ -23,7 +23,9 @@ Or install it yourself as:
     $ gem install loadmop
 
 ## Usage
+Run `bundle exec loadmop` with no arguments to get a help screen and figure out which command you want to run
 
+### Preparation
 Create a .env file in the root directory of the clone, specifying:
 
 - SEQUELIZER_DATABASE
@@ -52,20 +54,30 @@ Then:
 - **Create the database you just specified in your .env file**
     - loadmop isn't (yet) cool enough to actually create the database for you
     - If you're using SQLite, you don't have to create the database file
-- Download the [OMOP Vocabulary Files](http://vocabbuild.omop.org/vocabulary-release) and unzip them to some directory.
-    - I recommend you use the restricted files since they include CPT codes and other useful vocabularies.
 - cd into a directory where you've defined a config/database.yml or .env file that is compatible with Sequelizer
 - run `bundle install` to make sure you have all the needed dependencies installed
 - run `bundle exec sequelizer config` to ensure your connection parameters are correctly set
 - run `bundle exec sequelizer update_gemfile` to ensure your Gemfile has the right database gem
-- You'll probably want to just run `bundle exec loadmop create_vocab_database /path/to/directory/holding/unzipped/files`
-    - This runs all the steps for creating the vocabulary database, namely
+
+### Loading Vocabulary Files
+
+- Download the [OMOP Vocabulary Files](http://vocabbuild.omop.org/vocabulary-release) and unzip them to some directory.
+    - I recommend you use the restricted files since they include CPT codes and other useful vocabularies.
+- Run `bundle exec loadmop create_vocab_database /path/to/directory/holding/unzipped/vocabulary/files`
+    - This runs all the steps for setting up the vocabulary database, namely
         - Creating the proper tables
         - Prepping the CSV files to load into the database
         - Loading the CSV files into the database
         - Adding some useful indexes to the vocabulary tables
 
-To run an individual command, run `bundle exec loadmop` with no arguments to get a help screen and figure out which command you want to run.
+
+### Loading CDM Data
+- Run `bundle exec loadmop create_vocab_database /path/to/directory/holding/cdm/data/files`
+    - This runs all the steps for loading CDM data into a database, namely
+        - Creating the proper CDM tables
+        - Prepping the CSV files to load into the database
+        - Loading the CSV files into the database
+        - Adding some useful indexes to the CDM tables
 
 ## Pleas for Help
 
