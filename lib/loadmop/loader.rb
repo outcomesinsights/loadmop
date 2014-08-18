@@ -12,6 +12,7 @@ module Loadmop
       @data_files_dir = Pathname.new(data_files_dir)
       @options = options
       @headers = {}
+      db(options)
     end
 
     def create_database
