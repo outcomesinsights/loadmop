@@ -1,6 +1,21 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.0.3 - 2014-08-29
+
+### Added
+- Require database name as argument for each command.
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Nothing.
+
+### Fixed
+- #slow_load option was skipping rows and misreading headers.
+
+
 ## 0.0.2 - 2014-07-11
 
 ### Added
@@ -14,6 +29,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Bug where schemas directory was not found when loadmop was installed as a gem
+
 
 ## 0.0.1 - 2014-07-10
 
