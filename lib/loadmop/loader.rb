@@ -100,10 +100,10 @@ module Loadmop
       all_files.each do |table_name, files|
         files.each do |file|
           puts "Loading #{file} into #{table_name}"
-          CSV.open(file, headers: true) do |csv|
+          CSV.open(file) do |csv|
             csv.each_slice(1000) do |rows|
               print '.'
-              db[table_name].import(headers_for(file), rows.map(&:fields))
+              db[table_name].import(headers_for(file), rows)
             end
           end
           puts
@@ -120,6 +120,9 @@ module Loadmop
     end
 
     def headers_for(file)
+      if file.to_s =~ /split/
+        file = Pathname.new(file.dirname.to_s.sub('split', 'cleaned') + '.csv')
+      end
       header_line = File.open(file, &:readline).downcase.gsub(/\|$/, '')
       CSV.parse(header_line).first.map(&:to_sym)
     end
