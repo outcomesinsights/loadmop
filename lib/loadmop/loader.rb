@@ -8,11 +8,11 @@ module Loadmop
 
     attr :options, :data_files_dir, :headers
 
-    def initialize(data_files_dir, options = {})
+    def initialize(database_name, data_files_dir, options = {})
       @data_files_dir = Pathname.new(data_files_dir)
       @options = options
       @headers = {}
-      db(options)
+      db(options.merge(database: database_name))
     end
 
     def create_database
