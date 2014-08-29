@@ -72,7 +72,7 @@ Then:
 
 
 ### Loading CDM Data
-- Run `bundle exec loadmop create_vocab_database /path/to/directory/holding/cdm/data/files`
+- Run `bundle exec loadmop create_cdmv4_data /path/to/directory/holding/cdm/data/files`
     - This runs all the steps for loading CDM data into a database, namely
         - Creating the proper CDM tables
         - Prepping the CSV files to load into the database
