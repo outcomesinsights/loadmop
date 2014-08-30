@@ -112,11 +112,11 @@ module Loadmop
     end
 
     def adapter
-      db.sequelizer_options.adapter
+      db.database_type
     end
 
     def database
-      db.sequelizer_options.database
+      db.opts[:database]
     end
 
     def headers_for(file)
