@@ -14,7 +14,7 @@ module Loadmop
       'schemas/cdmv4'
     end
 
-    def files
+    def files_of_interest
       ordered_file_names.map { |name| data_files_dir + name }.select(&:exist?)
     end
 
