@@ -121,7 +121,7 @@ module Loadmop
 
     def headers_for(file)
       if file.to_s =~ /split/
-        file = Pathname.new(file.dirname.to_s.sub('split', 'cleaned') + '.csv')
+        file = Pathname.new(file.dirname.to_s.sub('split/', '') + '.csv')
       end
       header_line = File.open(file, &:readline).downcase.gsub(/\|$/, '')
       CSV.parse(header_line).first.map(&:to_sym)
