@@ -97,13 +97,13 @@ module Loadmop
     end
 
     def slow_load
-      all_files.each do |table_name, files|
+      all_files.each do |table, files|
         files.each do |file|
-          puts "Loading #{file} into #{table_name}"
+          puts "Loading #{file} into #{table}"
           CSV.open(file) do |csv|
             csv.each_slice(1000) do |rows|
               print '.'
-              db[table_name].import(headers_for(file), rows)
+              db[table_name(table)].import(headers_for(file), rows)
             end
           end
           puts
