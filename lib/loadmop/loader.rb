@@ -169,5 +169,9 @@ module Loadmop
     def base_dir
       Pathname.new(__FILE__).dirname + '../..'
     end
+
+    def schemas
+      @schemas ||= (options[:search_path] || '').split(',').map(&:strip).map(&:to_sym)
+    end
   end
 end
