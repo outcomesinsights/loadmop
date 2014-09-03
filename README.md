@@ -54,6 +54,7 @@ Then:
 - **Create the database you just specified in your .env file**
     - loadmop isn't (yet) cool enough to actually create the database for you
     - If you're using SQLite, you don't have to create the database file
+    - **If your database defaults to using case-insensitive storage of text, (I'm looking at you MySQL and SQL Server), make sure to set a case-sensitive collation on your database**
 - cd into a directory where you've defined a config/database.yml or .env file that is compatible with Sequelizer
 - run `bundle install` to make sure you have all the needed dependencies installed
 - run `bundle exec sequelizer config` to ensure your connection parameters are correctly set
