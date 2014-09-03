@@ -97,13 +97,13 @@ module Loadmop
     end
 
     def slow_load
-      all_files.each do |table_name, files|
+      all_files.each do |table, files|
         files.each do |file|
-          puts "Loading #{file} into #{table_name}"
+          puts "Loading #{file} into #{table}"
           CSV.open(file) do |csv|
             csv.each_slice(1000) do |rows|
               print '.'
-              db[table_name].import(headers_for(file), rows)
+              db[table_name(table)].import(headers_for(file), rows)
             end
           end
           puts
@@ -163,11 +163,40 @@ module Loadmop
       Hash[files]
     end
 
-    # When installed as a gem, we need to find where the gem is installed
-    # and look for files relative to that path.  base_dir returns the
-    # path to the loadmop gem
-    def base_dir
-      Pathname.new(__FILE__).dirname + '../..'
+    def schemas
+      @schemas ||= (options[:search_path] || '').split(',').map(&:strip).map(&:to_sym)
+    end
+
+    def table_name(name)
+      return name unless schemas.length > 0
+      [schemas.first, name].map(&:to_s).map(&:upcase).join('__').to_sym
+    end
+
+    def create_schema_if_necessary
+      return unless options[:search_path]
+      if db.database_type == :mssql
+        schemas.each do |schema|
+          schema = schema.to_s.upcase
+
+          create_if_not_exists = <<-EOF
+          IF NOT EXISTS (
+          SELECT  name
+          FROM    sys.schemas
+          WHERE   name = '#{schema}' )
+
+          BEGIN
+          EXEC sp_executesql N'CREATE SCHEMA #{schema}'
+          END
+          EOF
+
+          db.execute(create_if_not_exists)
+        end
+      elsif db.database_type == :postgres
+        schemas.each do |schema|
+          db.execute("CREATE SCHEMA IF NOT EXISTS #{schema}")
+        end
+        db.execute("SET search_path TO #{search_path}")
+      end
     end
   end
 end
