@@ -173,5 +173,10 @@ module Loadmop
     def schemas
       @schemas ||= (options[:search_path] || '').split(',').map(&:strip).map(&:to_sym)
     end
+
+    def table_name(name)
+      return name unless schemas.length > 0
+      [schemas.first, name].map(&:to_s).map(&:upcase).join('__').to_sym
+    end
   end
 end
