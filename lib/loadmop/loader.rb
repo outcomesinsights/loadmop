@@ -163,13 +163,6 @@ module Loadmop
       Hash[files]
     end
 
-    # When installed as a gem, we need to find where the gem is installed
-    # and look for files relative to that path.  base_dir returns the
-    # path to the loadmop gem
-    def base_dir
-      Pathname.new(__FILE__).dirname + '../..'
-    end
-
     def schemas
       @schemas ||= (options[:search_path] || '').split(',').map(&:strip).map(&:to_sym)
     end
@@ -184,6 +177,7 @@ module Loadmop
       if db.database_type == :mssql
         schemas.each do |schema|
           schema = schema.to_s.upcase
+
           create_if_not_exists = <<-EOF
           IF NOT EXISTS (
           SELECT  name
@@ -194,6 +188,7 @@ module Loadmop
           EXEC sp_executesql N'CREATE SCHEMA #{schema}'
           END
           EOF
+
           db.execute(create_if_not_exists)
         end
       elsif db.database_type == :postgres
