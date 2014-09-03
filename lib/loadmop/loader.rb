@@ -181,8 +181,6 @@ module Loadmop
 
     def create_schema_if_necessary
       return unless options[:search_path]
-      puts schemas.inspect
-      puts db.database_type.inspect
       if db.database_type == :mssql
         schemas.each do |schema|
           schema = schema.to_s.upcase
