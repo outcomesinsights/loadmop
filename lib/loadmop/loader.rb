@@ -178,5 +178,32 @@ module Loadmop
       return name unless schemas.length > 0
       [schemas.first, name].map(&:to_s).map(&:upcase).join('__').to_sym
     end
+
+    def create_schema_if_necessary
+      return unless options[:search_path]
+      puts schemas.inspect
+      puts db.database_type.inspect
+      if db.database_type == :mssql
+        schemas.each do |schema|
+          schema = schema.to_s.upcase
+          create_if_not_exists = <<-EOF
+          IF NOT EXISTS (
+          SELECT  name
+          FROM    sys.schemas
+          WHERE   name = '#{schema}' )
+
+          BEGIN
+          EXEC sp_executesql N'CREATE SCHEMA #{schema}'
+          END
+          EOF
+          db.execute(create_if_not_exists)
+        end
+      elsif db.database_type == :postgres
+        schemas.each do |schema|
+          db.execute("CREATE SCHEMA IF NOT EXISTS #{schema}")
+        end
+        db.execute("SET search_path TO #{search_path}")
+      end
+    end
   end
 end
