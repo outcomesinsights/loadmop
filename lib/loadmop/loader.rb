@@ -167,7 +167,7 @@ module Loadmop
 
     def table_name(name)
       return name unless schemas.length > 0
-      [schemas.first, name].map(&:to_s).map(&:upcase).join('__').to_sym
+      [schemas.first, name].map(&:to_s).join('__').to_sym
     end
 
     def create_schema_if_necessary
@@ -193,7 +193,7 @@ module Loadmop
         schemas.each do |schema|
           db.execute("CREATE SCHEMA IF NOT EXISTS #{schema}")
         end
-        db.execute("SET search_path TO #{search_path}")
+        db.execute("SET search_path TO #{options[:search_path]}")
       end
     end
   end
