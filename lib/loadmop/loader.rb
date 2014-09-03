@@ -23,13 +23,11 @@ module Loadmop
 
     private
     def create_tables
-      Sequel.extension :migration
-      Sequel::Migrator.run(db, base_dir + schemas_dir, target: 1)
+      raise NotImplementedError
     end
 
     def create_indexes
-      Sequel.extension :migration
-      Sequel::Migrator.run(db, base_dir + schemas_dir, target: 2)
+      raise NotImplementedError
     end
 
     def all_files
