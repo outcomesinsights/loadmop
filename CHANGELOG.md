@@ -1,6 +1,25 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Added
+- Nothing.
+
+### Changed
+- Use foreign_key in vocab table definitions.
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Nothing.
+
+### Fixed
+- Nothing.
+
+
+
 ## 0.0.5 - 2014-09-03
 
 ### Added

@@ -9,13 +9,34 @@ module Loadmop
     end
 
     def create_tables
+      vocabulary_table = table_name(:vocabulary)
+      concept_table = table_name(:concept)
+      relationship_table = table_name(:relationship)
+
       create_schema_if_necessary
+      db.create_table!(table_name(:vocabulary)) do
+        Bignum :vocabulary_id, :null=>false
+        String :vocabulary_name, :null=>false
+
+        primary_key [:vocabulary_id]
+      end
+
+      db.create_table!(table_name(:relationship)) do
+        Bignum :relationship_id, :null=>false
+        String :relationship_name, :null=>false
+        String :is_hierarchical, :size=>1, :fixed=>true
+        String :defines_ancestry, :size=>1, :fixed=>true
+        foreign_key :reverse_relationship, relationship_table, type: Bignum, key: :relationship_id
+
+        primary_key [:relationship_id]
+      end
+
       db.create_table!(table_name(:concept)) do
         Bignum :concept_id, :null=>false
         String :concept_name, :null=>false
         BigDecimal :concept_level, :null=>false
         String :concept_class, :null=>false
-        Bignum :vocabulary_id, :null=>false
+        foreign_key :vocabulary_id, vocabulary_table, :null=>false, type: Bignum, key: [:vocabulary_id]
         String :concept_code, :null=>false
         Date :valid_start_date, :null=>false
         Date :valid_end_date, :null=>false
@@ -25,8 +46,8 @@ module Loadmop
       end
 
       db.create_table!(table_name(:concept_ancestor)) do
-        Bignum :ancestor_concept_id, :null=>false
-        Bignum :descendant_concept_id, :null=>false
+        foreign_key :ancestor_concept_id, concept_table, :null=>false, type: Bignum, key: [:concept_id]
+        foreign_key :descendant_concept_id, concept_table, :null=>false, type: Bignum, key: [:concept_id]
         BigDecimal :min_levels_of_separation
         BigDecimal :max_levels_of_separation
 
@@ -34,9 +55,9 @@ module Loadmop
       end
 
       db.create_table!(table_name(:concept_relationship)) do
-        Bignum :concept_id_1, :null=>false
-        Bignum :concept_id_2, :null=>false
-        Bignum :relationship_id, :null=>false
+        foreign_key :concept_id_1, concept_table, :null=>false, type: Bignum, key: [:concept_id]
+        foreign_key :concept_id_2, concept_table, :null=>false, type: Bignum, key: [:concept_id]
+        foreign_key :relationship_id, relationship_table, :null=>false, type: Bignum, key: [:relationship_id]
         Date :valid_start_date, :null=>false
         Date :valid_end_date, :null=>false
         String :invalid_reason, :size=>1, :fixed=>true
@@ -46,7 +67,7 @@ module Loadmop
 
       db.create_table!(table_name(:concept_synonym)) do
         Bignum :concept_synonym_id, :null=>false
-        Bignum :concept_id, :null=>false
+        foreign_key :concept_id, concept_table, :null=>false, type: Bignum, key: [:concept_id]
         String :concept_synonym_name, :null=>false
 
         primary_key [:concept_synonym_id]
@@ -71,22 +92,12 @@ module Loadmop
         String :invalid_reason
       end
 
-      db.create_table!(table_name(:relationship)) do
-        Bignum :relationship_id, :null=>false
-        String :relationship_name, :null=>false
-        String :is_hierarchical, :size=>1, :fixed=>true
-        String :defines_ancestry, :size=>1, :fixed=>true
-        Bignum :reverse_relationship
-
-        primary_key [:relationship_id]
-      end
-
       db.create_table!(table_name(:source_to_concept_map)) do
         String :source_code, :null=>false
-        Bignum :source_vocabulary_id, :null=>false
+        foreign_key :source_vocabulary_id, vocabulary_table, :null=>false, type: Bignum, key: [:vocabulary_id]
         String :source_code_description
-        Bignum :target_concept_id, :null=>false
-        Bignum :target_vocabulary_id, :null=>false
+        foreign_key :target_concept_id, concept_table, :null=>false, type: Bignum, key: [:concept_id]
+        foreign_key :target_vocabulary_id, vocabulary_table, :null=>false, type: Bignum, key: [:vocabulary_id]
         String :mapping_type
         String :primary_map, :size=>1, :fixed=>true
         Date :valid_start_date, :null=>false
@@ -94,13 +105,6 @@ module Loadmop
         String :invalid_reason, :size=>1, :fixed=>true
 
         primary_key [:source_code, :source_vocabulary_id, :target_concept_id, :valid_end_date]
-      end
-
-      db.create_table!(table_name(:vocabulary)) do
-        Bignum :vocabulary_id, :null=>false
-        String :vocabulary_name, :null=>false
-
-        primary_key [:vocabulary_id]
       end
     end
 
