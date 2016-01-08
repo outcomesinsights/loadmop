@@ -4,8 +4,37 @@ module Loadmop
   class VocabLoader < Loader
 
     private
-    def additional_cleaning_steps
-      ["sed 's/\|$//'"]
+
+    def files_of_interest
+      %w'vocabulary relationship concept concept_ancestor concept_relationship concept_synonym drug_approval drug_strength source_to_concept_map'.map do |f|
+        Pathname.new(data_files_dir + "#{f}.txt")
+      end.select{|f| f.exist?}
+    end
+
+    def postgres_copy_into_options
+      {options: "DELIMITER e'\\362', QUOTE e'\\377'"}
+    end
+
+    def ruby_csv_options
+      {col_sep: 0o362.chr, quote_char: 0o377.chr}
+    end
+
+    def make_all_files
+      split_dir = data_files_dir + 'split'
+      split_dir.mkdir unless split_dir.exist?
+      files = files_of_interest.map do |file|
+        table_name = file.basename('.*').to_s.downcase.to_sym
+        headers = db.from(table_name).columns
+        dir = split_dir + table_name.to_s
+        unless dir.exist?
+          dir.mkdir
+          Dir.chdir(dir) do
+            puts "Splitting #{file}"
+            system("sed 's/\015//g' #{file.expand_path} | split -a 5 -l #{lines_per_split}")
+          end
+        end
+        [table_name, headers, dir.children.sort]
+      end
     end
 
     def create_tables
