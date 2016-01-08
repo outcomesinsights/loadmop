@@ -4,8 +4,37 @@ module Loadmop
   class VocabLoader < Loader
 
     private
-    def additional_cleaning_steps
-      ["sed 's/\|$//'"]
+
+    def files_of_interest
+      %w'vocabulary relationship concept concept_ancestor concept_relationship concept_synonym drug_approval drug_strength source_to_concept_map'.map do |f|
+        Pathname.new(data_files_dir + "#{f}.txt")
+      end.select{|f| f.exist?}
+    end
+
+    def postgres_copy_into_options
+      {options: "DELIMITER e'\\362', QUOTE e'\\377'"}
+    end
+
+    def ruby_csv_options
+      {col_sep: 0o362.chr, quote_char: 0o377.chr}
+    end
+
+    def make_all_files
+      split_dir = data_files_dir + 'split'
+      split_dir.mkdir unless split_dir.exist?
+      files = files_of_interest.map do |file|
+        table_name = file.basename('.*').to_s.downcase.to_sym
+        headers = db.from(table_name).columns
+        dir = split_dir + table_name.to_s
+        unless dir.exist?
+          dir.mkdir
+          Dir.chdir(dir) do
+            puts "Splitting #{file}"
+            system("sed 's/\015//g' #{file.expand_path} | split -a 5 -l #{lines_per_split}")
+          end
+        end
+        [table_name, headers, dir.children.sort]
+      end
     end
 
     def create_tables
@@ -14,50 +43,44 @@ module Loadmop
       relationship_table = table_name(:relationship)
 
       create_schema_if_necessary
-      db.create_table!(table_name(:vocabulary)) do
-        Bignum :vocabulary_id, :null=>false
+      db.create_table?(table_name(:vocabulary)) do
+        Bignum :vocabulary_id, :primary_key=>true
         String :vocabulary_name, :null=>false
-
-        primary_key [:vocabulary_id]
       end
 
-      db.create_table!(table_name(:relationship)) do
-        Bignum :relationship_id, :null=>false
+      db.create_table?(table_name(:relationship)) do
+        Bignum :relationship_id, :primary_key=>true
         String :relationship_name, :null=>false
         String :is_hierarchical, :size=>1, :fixed=>true
         String :defines_ancestry, :size=>1, :fixed=>true
-        foreign_key :reverse_relationship, relationship_table, type: Bignum, key: :relationship_id
-
-        primary_key [:relationship_id]
+        foreign_key :reverse_relationship, relationship_table, type: Bignum
       end
 
-      db.create_table!(table_name(:concept)) do
-        Bignum :concept_id, :null=>false
+      db.create_table?(table_name(:concept)) do
+        Bignum :concept_id, :primary_key=>true
         String :concept_name, :null=>false
         BigDecimal :concept_level, :null=>false
         String :concept_class, :null=>false
-        foreign_key :vocabulary_id, vocabulary_table, :null=>false, type: Bignum, key: [:vocabulary_id]
+        foreign_key :vocabulary_id, vocabulary_table, :null=>false, type: Bignum
         String :concept_code, :null=>false
         Date :valid_start_date, :null=>false
         Date :valid_end_date, :null=>false
         String :invalid_reason, :size=>1, :fixed=>true
-
-        primary_key [:concept_id]
       end
 
-      db.create_table!(table_name(:concept_ancestor)) do
-        foreign_key :ancestor_concept_id, concept_table, :null=>false, type: Bignum, key: [:concept_id]
-        foreign_key :descendant_concept_id, concept_table, :null=>false, type: Bignum, key: [:concept_id]
+      db.create_table?(table_name(:concept_ancestor)) do
+        foreign_key :ancestor_concept_id, concept_table, :null=>false, type: Bignum
+        foreign_key :descendant_concept_id, concept_table, :null=>false, type: Bignum
         BigDecimal :min_levels_of_separation
         BigDecimal :max_levels_of_separation
 
         primary_key [:ancestor_concept_id, :descendant_concept_id]
       end
 
-      db.create_table!(table_name(:concept_relationship)) do
-        foreign_key :concept_id_1, concept_table, :null=>false, type: Bignum, key: [:concept_id]
-        foreign_key :concept_id_2, concept_table, :null=>false, type: Bignum, key: [:concept_id]
-        foreign_key :relationship_id, relationship_table, :null=>false, type: Bignum, key: [:relationship_id]
+      db.create_table?(table_name(:concept_relationship)) do
+        foreign_key :concept_id_1, concept_table, :null=>false, type: Bignum
+        foreign_key :concept_id_2, concept_table, :null=>false, type: Bignum
+        foreign_key :relationship_id, relationship_table, :null=>false, type: Bignum
         Date :valid_start_date, :null=>false
         Date :valid_end_date, :null=>false
         String :invalid_reason, :size=>1, :fixed=>true
@@ -65,21 +88,19 @@ module Loadmop
         primary_key [:concept_id_1, :concept_id_2, :relationship_id]
       end
 
-      db.create_table!(table_name(:concept_synonym)) do
-        Bignum :concept_synonym_id, :null=>false
-        foreign_key :concept_id, concept_table, :null=>false, type: Bignum, key: [:concept_id]
+      db.create_table?(table_name(:concept_synonym)) do
+        Bignum :concept_synonym_id, :primary_key=>true
+        foreign_key :concept_id, concept_table, :null=>false, type: Bignum
         String :concept_synonym_name, :null=>false
-
-        primary_key [:concept_synonym_id]
       end
 
-      db.create_table!(table_name(:drug_approval)) do
+      db.create_table?(table_name(:drug_approval)) do
         Bignum :ingredient_concept_id, :null => false
         Date :approval_date, :null => false
         String :approved_by, :null => false
       end
 
-      db.create_table!(table_name(:drug_strength)) do
+      db.create_table?(table_name(:drug_strength)) do
         Bignum :drug_concept_id, :null => false
         Bignum :ingredient_concept_id, :null => false
         BigDecimal :amount_value
@@ -92,12 +113,12 @@ module Loadmop
         String :invalid_reason
       end
 
-      db.create_table!(table_name(:source_to_concept_map)) do
+      db.create_table?(table_name(:source_to_concept_map)) do
         String :source_code, :null=>false
-        foreign_key :source_vocabulary_id, vocabulary_table, :null=>false, type: Bignum, key: [:vocabulary_id]
+        foreign_key :source_vocabulary_id, vocabulary_table, :null=>false, type: Bignum
         String :source_code_description
-        foreign_key :target_concept_id, concept_table, :null=>false, type: Bignum, key: [:concept_id]
-        foreign_key :target_vocabulary_id, vocabulary_table, :null=>false, type: Bignum, key: [:vocabulary_id]
+        foreign_key :target_concept_id, concept_table, :null=>false, type: Bignum
+        foreign_key :target_vocabulary_id, vocabulary_table, :null=>false, type: Bignum
         String :mapping_type
         String :primary_map, :size=>1, :fixed=>true
         Date :valid_start_date, :null=>false

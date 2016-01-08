@@ -6,12 +6,11 @@ module Loadmop
   class Loader
     include Sequelizer
 
-    attr :options, :data_files_dir, :headers
+    attr :options, :data_files_dir
 
     def initialize(database_name, data_files_dir, options = {})
       @data_files_dir = Pathname.new(data_files_dir)
       @options = options
-      @headers = {}
       db(options.merge(database: database_name))
     end
 
@@ -40,25 +39,31 @@ module Loadmop
 
     def fast_load
       case adapter
-      when 'postgres'
+      when :postgres
         fast_load_postgres
-      when 'sqlite'
+      when :sqlite
         fast_load_sqlite
       else
         nil
       end
     end
 
+    def postgres_copy_into_options
+      {}
+    end
+
     def fast_load_postgres
-      all_files.each do |table_name, files|
+      all_files.each do |table_name, headers, files|
         db[table_name].truncate(cascade: true)
         files.each do |file|
           puts "Loading #{file} into #{table_name}"
           db.copy_into(
             table_name,
-            format:  :csv,
-            columns: headers[table_name],
-            data:    File.read(file)
+            {
+              format:  :csv,
+              columns: headers,
+              data:    File.binread(file),
+            }.merge(postgres_copy_into_options)
           )
         end
       end
@@ -94,14 +99,18 @@ module Loadmop
       system(command)
     end
 
+    def ruby_csv_options
+      {}
+    end
+
     def slow_load
-      all_files.each do |table, files|
+      all_files.each do |table, columns, files|
         files.each do |file|
           puts "Loading #{file} into #{table}"
-          CSV.open(file) do |csv|
+          CSV.open(file, "rb", ruby_csv_options) do |csv|
             csv.each_slice(1000) do |rows|
               print '.'
-              db[table_name(table)].import(headers_for(file), rows)
+              db[table_name(table)].import(columns, rows)
             end
           end
           puts
@@ -121,12 +130,8 @@ module Loadmop
       if file.to_s =~ /split/
         file = Pathname.new(file.dirname.to_s.sub('split/', '') + '.csv')
       end
-      header_line = File.open(file, &:readline).downcase.gsub(/\|$/, '')
+      header_line = File.open(file, 'rb', &:readline).downcase.gsub(/\|$/, '')
       CSV.parse(header_line).first.map(&:to_sym)
-    end
-
-    def files_of_interest
-      Pathname.glob(data_files_dir + '*.csv')
     end
 
     def lines_per_split
@@ -140,9 +145,9 @@ module Loadmop
     def make_all_files
       split_dir = data_files_dir + 'split'
       split_dir.mkdir unless split_dir.exist?
-      files = files_of_interest.map do |file|
+      files_of_interest.map do |file|
         table_name = file.basename('.*').to_s.downcase.to_sym
-        headers[table_name] = headers_for(file)
+        headers = headers_for(file)
         dir = split_dir + table_name.to_s
         unless dir.exist?
           dir.mkdir
@@ -155,10 +160,8 @@ module Loadmop
             system(steps.compact.join(" | "))
           end
         end
-        [table_name, dir.children.sort]
+        [table_name, headers, dir.children.sort]
       end
-
-      Hash[files]
     end
 
     def schemas
@@ -167,7 +170,7 @@ module Loadmop
 
     def table_name(name)
       return name unless schemas.length > 0
-      [schemas.first, name].map(&:to_s).join('__').to_sym
+      Sequel.qualify(schemas.first, name)
     end
 
     def create_schema_if_necessary
