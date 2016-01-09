@@ -6,17 +6,17 @@ module Loadmop
     private
 
     def files_of_interest
-      %w'vocabulary relationship concept concept_ancestor concept_relationship concept_synonym drug_approval drug_strength source_to_concept_map'.map do |f|
-        Pathname.new(data_files_dir + "#{f}.txt")
+      %w'vocabulary relationship concept concept_ancestor concept_relationship concept_synonym drug_strength source_to_concept_map'.map do |f|
+        Pathname.new(data_files_dir + "#{f.upcase}.csv")
       end.select{|f| f.exist?}
     end
 
     def postgres_copy_into_options
-      {options: "DELIMITER e'\\362', QUOTE e'\\377'"}
+      {options: "DELIMITER e'\\t', QUOTE e'\\377'"}
     end
 
     def ruby_csv_options
-      {col_sep: 0o362.chr, quote_char: 0o377.chr}
+      {col_sep: "\t", quote_char: 0o377.chr}
     end
 
     def make_all_files
@@ -30,7 +30,8 @@ module Loadmop
           dir.mkdir
           Dir.chdir(dir) do
             puts "Splitting #{file}"
-            system("sed 's/\015//g' #{file.expand_path} | split -a 5 -l #{lines_per_split}")
+            #system("tail -n +2 #{file.expand_path}  | sed 's/\015//g' | split -a 5 -l #{lines_per_split}")
+            system("tail -n +2 #{file.expand_path} | split -a 5 -l #{lines_per_split}")
           end
         end
         [table_name, headers, dir.children.sort]
@@ -53,7 +54,7 @@ module Loadmop
         String :relationship_name, :null=>false
         String :is_hierarchical, :size=>1, :fixed=>true
         String :defines_ancestry, :size=>1, :fixed=>true
-        foreign_key :reverse_relationship, relationship_table, type: Bignum
+        Bignum :reverse_relationship
       end
 
       db.create_table?(table_name(:concept)) do
@@ -61,7 +62,7 @@ module Loadmop
         String :concept_name, :null=>false
         BigDecimal :concept_level, :null=>false
         String :concept_class, :null=>false
-        foreign_key :vocabulary_id, vocabulary_table, :null=>false, type: Bignum
+        Bignum :vocabulary_id, :null=>false
         String :concept_code, :null=>false
         Date :valid_start_date, :null=>false
         Date :valid_end_date, :null=>false
@@ -69,8 +70,8 @@ module Loadmop
       end
 
       db.create_table?(table_name(:concept_ancestor)) do
-        foreign_key :ancestor_concept_id, concept_table, :null=>false, type: Bignum
-        foreign_key :descendant_concept_id, concept_table, :null=>false, type: Bignum
+        Bignum :ancestor_concept_id
+        Bignum :descendant_concept_id
         BigDecimal :min_levels_of_separation
         BigDecimal :max_levels_of_separation
 
@@ -78,9 +79,9 @@ module Loadmop
       end
 
       db.create_table?(table_name(:concept_relationship)) do
-        foreign_key :concept_id_1, concept_table, :null=>false, type: Bignum
-        foreign_key :concept_id_2, concept_table, :null=>false, type: Bignum
-        foreign_key :relationship_id, relationship_table, :null=>false, type: Bignum
+        Bignum :concept_id_1
+        Bignum :concept_id_2
+        Bignum :relationship_id
         Date :valid_start_date, :null=>false
         Date :valid_end_date, :null=>false
         String :invalid_reason, :size=>1, :fixed=>true
@@ -90,7 +91,7 @@ module Loadmop
 
       db.create_table?(table_name(:concept_synonym)) do
         Bignum :concept_synonym_id, :primary_key=>true
-        foreign_key :concept_id, concept_table, :null=>false, type: Bignum
+        Bignum :concept_id, :null=>false
         String :concept_synonym_name, :null=>false
       end
 
@@ -115,10 +116,10 @@ module Loadmop
 
       db.create_table?(table_name(:source_to_concept_map)) do
         String :source_code, :null=>false
-        foreign_key :source_vocabulary_id, vocabulary_table, :null=>false, type: Bignum
+        Bignum :source_vocabulary_id
         String :source_code_description
-        foreign_key :target_concept_id, concept_table, :null=>false, type: Bignum
-        foreign_key :target_vocabulary_id, vocabulary_table, :null=>false, type: Bignum
+        Bignum :target_concept_id
+        Bignum :target_vocabulary_id, :null=>false
         String :mapping_type
         String :primary_map, :size=>1, :fixed=>true
         Date :valid_start_date, :null=>false
