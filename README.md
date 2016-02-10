@@ -16,16 +16,18 @@ Add this line to your application's Gemfile:
 
 And then execute:
 
-    $ bundle
+    bundle
 
 Or install it yourself as:
 
-    $ gem install loadmop
+    gem install loadmop
 
 ## Usage
+
 Run `bundle exec loadmop` with no arguments to get a help screen and figure out which command you want to run
 
 ### Preparation
+
 Create a .env file in the root directory of the clone, specifying:
 
 - SEQUELIZER_DATABASE
@@ -46,6 +48,8 @@ Create a .env file in the root directory of the clone, specifying:
 - SEQUELIZER_SEARCH_PATH
     - At least for PostgreSQL, specifies a schema to install into
     - Optional
+    - **When using PostgreSQL, make sure to use the following entry in loadmop's .env file to ensure the data is put in the correct schema:**
+        - SEQUELIZER_SEARCH_PATH=vocabulary,public
 
 See the [Sequelizer Gem](https://github.com/outcomesinsights/sequelizer) for [some .env examples](https://github.com/outcomesinsights/sequelizer/tree/master/examples)
 
@@ -63,18 +67,20 @@ Then:
 ### Loading Vocabulary Files
 
 - Download the [OMOP Vocabulary Files](http://www.ohdsi.org/web/athena/) and unzip them to some directory.
-    - In addition to the default selected vocabularies, also selected vocabulary 24 (ICD10)
+    - In addition to the default selected vocabularies, also select vocabulary 34 (ICD-10)
     - After downloading the zip file with the vocabularies via the link sent via email, run the java program to download the CPT codes, which can take about an hour.
+        - There are ~18,000 CPT codes to download one-at-a-time
     - Also, if on a case sensitive file system, add concept.csv to CONCEPT.csv: `cat concept.csv >> CONCEPT.csv`
-- Run `bundle exec loadmop create_vocab_database /path/to/directory/holding/unzipped/vocabulary/files`
+    - Unfortunately, this cannot be made significantly easier as the restricted vocabulary data can not be reformatted and redistributed due to the licensing agreement.
+- Run `bundle exec loadmop create_vocab_database <database_name> /absolute/path/to/directory/holding/unzipped/vocabulary/files`
     - This runs all the steps for setting up the vocabulary database, namely
         - Creating the proper tables
         - Prepping the CSV files to load into the database
         - Loading the CSV files into the database
         - Adding some useful indexes to the vocabulary tables
 
-
 ### Loading CDM Data
+
 - Run `bundle exec loadmop create_cdmv4_data /path/to/directory/holding/cdm/data/files`
     - This runs all the steps for loading CDM data into a database, namely
         - Creating the proper CDM tables
@@ -92,11 +98,11 @@ Please submit suggestions or pull requests to speed up loading under other RDBMS
 
 ## Contributing
 
-1. Fork it ( https://github.com/outcomesinsights/loadmop/fork )
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Add some feature'`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create a new Pull Request
+1. Fork it [https://github.com/outcomesinsights/loadmop/fork](https://github.com/outcomesinsights/loadmop/fork)
+1. Create your feature branch (`git checkout -b my-new-feature`)
+1. Commit your changes (`git commit -am 'Add some feature'`)
+1. Push to the branch (`git push origin my-new-feature`)
+1. Create a new Pull Request
 
 ## Thanks
 
