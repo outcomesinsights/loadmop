@@ -62,8 +62,10 @@ Then:
 
 ### Loading Vocabulary Files
 
-- Download the [OMOP Vocabulary Files](http://vocabbuild.omop.org/vocabulary-release) and unzip them to some directory.
-    - I recommend you use the restricted files since they include CPT codes and other useful vocabularies.
+- Download the [OMOP Vocabulary Files](http://www.ohdsi.org/web/athena/) and unzip them to some directory.
+    - In addition to the default selected vocabularies, also selected vocabulary 24 (ICD10)
+    - After downloading the zip file with the vocabularies via the link sent via email, run the java program to download the CPT codes, which can take about an hour.
+    - Also, if on a case sensitive file system, add concept.csv to CONCEPT.csv: `cat concept.csv >> CONCEPT.csv`
 - Run `bundle exec loadmop create_vocab_database /path/to/directory/holding/unzipped/vocabulary/files`
     - This runs all the steps for setting up the vocabulary database, namely
         - Creating the proper tables
