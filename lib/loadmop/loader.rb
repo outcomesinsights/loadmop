@@ -9,7 +9,7 @@ module Loadmop
     attr :options, :data_files_dir
 
     def initialize(database_name, data_files_dir, options = {})
-      @data_files_dir = Pathname.new(data_files_dir)
+      @data_files_dir = Pathname.new(data_files_dir).expand_path
       @options = options
       db(options.merge(database: database_name))
     end
@@ -56,7 +56,7 @@ module Loadmop
       all_files.each do |table_name, headers, files|
         db[table_name].truncate(cascade: true)
         files.each do |file|
-          puts "Loading #{file} into #{table_name}"
+          puts "Loading #{file} into #{table_name}(#{headers.join(", ")})"
           db.copy_into(
             table_name,
             {
@@ -66,6 +66,7 @@ module Loadmop
             }.merge(postgres_copy_into_options)
           )
         end
+        puts " #{db[table_name].count} loaded"
       end
       true
     end
