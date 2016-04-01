@@ -11,23 +11,24 @@ module Loadmop
 
     def ordered_tables
       %w(
+        location
+        organization
+        care_site
+        provider
         person
+        death
+        observation_period
+        payer_plan_period
         visit_occurrence
         condition_occurrence
+        drug_exposure
+        drug_cost
         procedure_occurrence
         procedure_cost
         observation
-        observation_period
-        payer_plan_period
-        drug_exposure
-        drug_cost
-        location
-        organization
-        provider
-        care_site
-        condition_era
-        death
         cohort
+        condition_era
+        drug_era
       )
     end
 
