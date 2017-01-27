@@ -12,13 +12,14 @@ module Loadmop
     end
 
     def postgres_copy_into_options
-      {options: "DELIMITER e'\\t', QUOTE e'\\377'"}
+      {options: "DELIMITER e'\\t', QUOTE e'\"'"}
     end
 
     def ruby_csv_options
       {col_sep: "\t", quote_char: 0o377.chr}
     end
 
+=begin
     def make_all_files
       split_dir = data_files_dir + 'split'
       split_dir.mkdir unless split_dir.exist?
@@ -37,6 +38,7 @@ module Loadmop
         [table_name, headers, dir.children.sort]
       end
     end
+=end
 
     def create_tables
       vocabulary_table = table_name(:vocabulary)
@@ -49,6 +51,7 @@ module Loadmop
         String :vocabulary_name, :null=>false
       end
 
+=begin
       db.create_table?(table_name(:relationship)) do
         Bignum :relationship_id, :primary_key=>true
         String :relationship_name, :null=>false
@@ -56,6 +59,7 @@ module Loadmop
         String :defines_ancestry, :size=>1, :fixed=>true
         Bignum :reverse_relationship
       end
+=end
 
       db.create_table?(table_name(:concept)) do
         Bignum :concept_id, :primary_key=>true
@@ -69,6 +73,7 @@ module Loadmop
         String :invalid_reason, :size=>1, :fixed=>true
       end
 
+=begin
       db.create_table?(table_name(:concept_ancestor)) do
         Bignum :ancestor_concept_id
         Bignum :descendant_concept_id
@@ -113,6 +118,7 @@ module Loadmop
         Date :valid_end_date, :null => false
         String :invalid_reason
       end
+=end
 
       db.create_table?(table_name(:source_to_concept_map)) do
         String :source_code, :null=>false
@@ -126,7 +132,7 @@ module Loadmop
         Date :valid_end_date, :null=>false
         String :invalid_reason, :size=>1, :fixed=>true
 
-        primary_key [:source_code, :source_vocabulary_id, :target_concept_id, :valid_end_date]
+        #primary_key [:source_code, :source_vocabulary_id, :target_concept_id, :valid_end_date]
       end
     end
 

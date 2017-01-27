@@ -48,7 +48,7 @@ module Loadmop
         Bignum :location_id, :null=>false
         Bignum :organization_id, :null=>false
         Bignum :place_of_service_concept_id
-        Bignum :place_of_service_concept_vocabulary_id
+        Bignum :place_of_service_source_vocabulary_id
         String :care_site_source_value, :size=>50
         String :place_of_service_source_value, :size=>50, :null=>false
       end
@@ -78,7 +78,7 @@ module Loadmop
         String :npi, :size=>20
         String :dea, :size=>20
         Bignum :specialty_concept_id
-        Bignum :specialty_concept_vocabulary_id
+        Bignum :specialty_source_vocabulary_id
         Bignum :care_site_id
         String :provider_source_value, :size=>50, :null=>false
         String :specialty_source_value, :size=>50
@@ -87,7 +87,7 @@ module Loadmop
       db.create_table?(table_name(:organization), :ignore_index_errors=>true) do
         Bignum :organization_id, :primary_key=>true
         Bignum :place_of_service_concept_id
-        Bignum :place_of_service_concept_vocabulary_id
+        Bignum :place_of_service_source_vocabulary_id
         foreign_key :location_id, location_table, :type=>Bignum
         String :organization_source_value, :size=>50, :null=>false
         String :place_of_service_source_value, :size=>50
@@ -96,14 +96,14 @@ module Loadmop
       db.create_table?(table_name(:person), :ignore_index_errors=>true) do
         Bignum :person_id, :primary_key=>true
         Bignum :gender_concept_id, :null=>false
-        Bignum :gender_concept_vocabulary_id
+        Bignum :gender_source_vocabulary_id
         Integer :year_of_birth, :null=>false
         Integer :month_of_birth
         Integer :day_of_birth
         Bignum :race_concept_id
-        Bignum :race_concept_vocabulary_id
+        Bignum :race_source_vocabulary_id
         Bignum :ethnicity_concept_id
-        Bignum :ethnicity_concept_vocabulary_id
+        Bignum :ethnicity_source_vocabulary_id
         foreign_key :location_id, location_table, :type=>Bignum
         foreign_key :provider_id, provider_table, :type=>Bignum
         Bignum :care_site_id
@@ -117,7 +117,7 @@ module Loadmop
         Bignum :condition_era_id, :primary_key=>true
         foreign_key :person_id, person_table, :type=>Bignum, :null=>false
         Bignum :condition_concept_id, :null=>false
-        Bignum :condition_concept_vocabulary_id
+        Bignum :condition_source_vocabulary_id
         Date :condition_era_start_date, :null=>false
         Date :condition_era_end_date, :null=>false
         Bignum :condition_type_concept_id, :null=>false
@@ -128,7 +128,7 @@ module Loadmop
         Bignum :condition_occurrence_id, :primary_key=>true
         foreign_key :person_id, person_table, :type=>Bignum, :null=>false
         Bignum :condition_concept_id, :null=>false
-        Bignum :condition_concept_vocabulary_id
+        Bignum :condition_source_vocabulary_id
         Date :condition_start_date, :null=>false
         Date :condition_end_date
         Bignum :condition_type_concept_id, :null=>false
@@ -142,9 +142,9 @@ module Loadmop
         foreign_key :person_id, person_table, :type=>Bignum, :primary_key=>true
         Date :death_date, :null=>false
         Bignum :death_type_concept_id, :null=>false
-        Bignum :death_type_concept_vocabulary_id
+        Bignum :death_type_source_vocabulary_id
         Bignum :cause_of_death_concept_id
-        Bignum :cause_of_death_concept_vocabulary_id
+        Bignum :cause_of_death_source_vocabulary_id
         String :cause_of_death_source_value, :size=>50
       end
 
@@ -152,7 +152,7 @@ module Loadmop
         Bignum :drug_era_id, :primary_key=>true
         foreign_key :person_id, person_table, :type=>Bignum, :null=>false
         Bignum :drug_concept_id, :null=>false
-        Bignum :drug_concept_vocabulary_id
+        Bignum :drug_source_vocabulary_id
         Date :drug_era_start_date, :null=>false
         Date :drug_era_end_date, :null=>false
         Bignum :drug_type_concept_id, :null=>false
@@ -163,7 +163,7 @@ module Loadmop
         Bignum :drug_exposure_id, :primary_key=>true
         foreign_key :person_id, person_table, :type=>Bignum, :null=>false
         Bignum :drug_concept_id, :null=>false
-        Bignum :drug_concept_vocabulary_id
+        Bignum :drug_source_vocabulary_id
         Date :drug_exposure_start_date, :null=>false
         Date :drug_exposure_end_date
         Bignum :drug_type_concept_id
@@ -182,7 +182,7 @@ module Loadmop
         Bignum :observation_id, :primary_key=>true
         foreign_key :person_id, person_table, :type=>Bignum, :null=>false
         Bignum :observation_concept_id, :null=>false
-        Bignum :observation_concept_vocabulary_id
+        Bignum :observation_source_vocabulary_id
         Date :observation_date, :null=>false
         Date :observation_time
         Float :value_as_number
@@ -222,7 +222,7 @@ module Loadmop
         Bignum :procedure_occurrence_id, :primary_key=>true
         foreign_key :person_id, person_table, :type=>Bignum, :null=>false
         Bignum :procedure_concept_id, :null=>false
-        Bignum :procedure_concept_vocabulary_id
+        Bignum :procedure_source_vocabulary_id
         Date :procedure_date, :null=>false
         Bignum :procedure_type_concept_id, :null=>false
         Bignum :associated_provider_id
@@ -237,7 +237,7 @@ module Loadmop
         Date :visit_start_date, :null=>false
         Date :visit_end_date, :null=>false
         Bignum :place_of_service_concept_id
-        Bignum :place_of_service_concept_vocabulary_id
+        Bignum :place_of_service_source_vocabulary_id
         Bignum :care_site_id
         String :place_of_service_source_value, :size=>50
         String :visit_occurrence_type_id, :size=>50
@@ -330,7 +330,7 @@ module Loadmop
 
       db.alter_table(table_name(:condition_occurrence)) do
         add_index [:condition_concept_id], :name=>:cci, :ignore_add_index_errors=>true
-        add_index [:condition_concept_vocabulary_id, :condition_source_value], :name=>:cci_source_value, :ignore_add_index_errors=>true
+        add_index [:condition_source_vocabulary_id, :condition_source_value], :name=>:cci_source_value, :ignore_add_index_errors=>true
         add_index [:associated_provider_id], :name=>:conocc_assproid, :ignore_add_index_errors=>true
         add_index [:condition_occurrence_id], :name=>:conocc_conoccid, :ignore_add_index_errors=>true
         add_index [:condition_source_value], :name=>:conocc_consouval, :ignore_add_index_errors=>true
@@ -355,7 +355,7 @@ module Loadmop
 
       db.alter_table(table_name(:drug_exposure)) do
         add_index [:drug_concept_id], :name=>:druexp_druconid, :ignore_add_index_errors=>true
-        add_index [:drug_concept_vocabulary_id, :drug_source_value], :name=>:druexp_druconid_source_value, :ignore_add_index_errors=>true
+        add_index [:drug_source_vocabulary_id, :drug_source_value], :name=>:druexp_druconid_source_value, :ignore_add_index_errors=>true
         add_index [:drug_exposure_id], :name=>:druexp_druexpid, :ignore_add_index_errors=>true
         add_index [:drug_type_concept_id], :name=>:druexp_drutypconid, :ignore_add_index_errors=>true
         add_index [:person_id], :name=>:druexp_perid, :ignore_add_index_errors=>true
@@ -367,7 +367,7 @@ module Loadmop
       db.alter_table(table_name(:observation)) do
         add_index [:associated_provider_id], :name=>:obs_assproid, :ignore_add_index_errors=>true
         add_index [:observation_concept_id], :name=>:obs_obsconid, :ignore_add_index_errors=>true
-        add_index [:observation_concept_vocabulary_id, :observation_source_value], :name=>:obs_obsconid_source_value, :ignore_add_index_errors=>true
+        add_index [:observation_source_vocabulary_id, :observation_source_value], :name=>:obs_obsconid_source_value, :ignore_add_index_errors=>true
         add_index [:observation_id], :name=>:obs_obsid, :ignore_add_index_errors=>true
         add_index [:observation_type_concept_id], :name=>:obs_obstypconid, :ignore_add_index_errors=>true
         add_index [:person_id], :name=>:obs_perid, :ignore_add_index_errors=>true
@@ -393,7 +393,7 @@ module Loadmop
         add_index [:associated_provider_id], :name=>:proocc_assproid, :ignore_add_index_errors=>true
         add_index [:person_id], :name=>:proocc_perid, :ignore_add_index_errors=>true
         add_index [:procedure_concept_id], :name=>:proocc_proconid, :ignore_add_index_errors=>true
-        add_index [:procedure_concept_vocabulary_id, :procedure_source_value], :name=>:proocc_proconid_source_value, :ignore_add_index_errors=>true
+        add_index [:procedure_source_vocabulary_id, :procedure_source_value], :name=>:proocc_proconid_source_value, :ignore_add_index_errors=>true
         add_index [:procedure_occurrence_id], :name=>:proocc_prooccid, :ignore_add_index_errors=>true
         add_index [:procedure_source_value], :name=>:proocc_prosouval, :ignore_add_index_errors=>true
         add_index [:procedure_type_concept_id], :name=>:proocc_protypconid, :ignore_add_index_errors=>true
@@ -406,7 +406,7 @@ module Loadmop
         add_index [:care_site_id], :name=>:visocc_carsitid, :ignore_add_index_errors=>true
         add_index [:person_id], :name=>:visocc_perid, :ignore_add_index_errors=>true
         add_index [:place_of_service_concept_id], :name=>:visocc_plaofserconid, :ignore_add_index_errors=>true
-        add_index [:place_of_service_concept_vocabulary_id, :place_of_service_source_value], :name=>:visocc_plaofserconid_source_value, :ignore_add_index_errors=>true
+        add_index [:place_of_service_source_vocabulary_id, :place_of_service_source_value], :name=>:visocc_plaofserconid_source_value, :ignore_add_index_errors=>true
         add_index [:visit_occurrence_id], :name=>:visocc_visoccid, :ignore_add_index_errors=>true
       end
 

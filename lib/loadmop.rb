@@ -2,6 +2,7 @@ require 'loadmop/version'
 require 'loadmop/cdmv4_loader'
 require 'loadmop/cdmv4_plus_loader'
 require 'loadmop/vocab_loader'
+require 'loadmop/generic_loader'
 
 module Loadmop
   def self.loader(schema)

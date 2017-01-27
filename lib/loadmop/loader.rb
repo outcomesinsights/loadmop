@@ -29,6 +29,10 @@ module Loadmop
       raise NotImplementedError
     end
 
+    def files_of_interest
+      raise NotImplementedError
+    end
+
     def all_files
       @all_files ||= make_all_files
     end
@@ -43,6 +47,8 @@ module Loadmop
         fast_load_postgres
       when :sqlite
         fast_load_sqlite
+      when :impala
+        load_impala
       else
         nil
       end
@@ -52,8 +58,52 @@ module Loadmop
       {}
     end
 
+    def load_impala
+      output = []
+      all_files.each do |table_name, headers, files, delimiter|
+        types = db.schema(table_name).map{|col,s| [col, s[:db_type]]}
+        types = Hash[types]
+        types = types.values_at(*headers)
+        casted_cols = headers.zip(types).map do |h, t|
+          impala_type = case t
+                        when 'double'
+                          'float'
+                        when '', nil
+                          'timestamp'
+                        else
+                          t
+                        end
+          Sequel.cast(h.to_sym, impala_type).as(h.to_sym)
+        end
+        create_table_sql = "insert overwrite table `#{table_name}` "
+        create_table_sql << db["#{table_name}_import".to_sym].select(*casted_cols).sql
+        create_table_sql << ";"
+        output << create_table_sql
+        next
+
+        db[table_name].delete
+
+
+        files.each_with_index do |file, index|
+          temp_db = new_db(db.opts.merge(:host => "hadoop#{(index % 3) + 2}.jsaw.io"))
+          puts "Loading #{file} onto #{temp_db.opts[:host]} into #{table_name}(#{headers.join(", ")})"
+          data = CSV.parse(File.binread(file))
+          data = data.map do |row|
+            row.zip(types).map do |v, t|
+              Sequel.cast(v, t == 'double' ? 'float' : t)
+            end
+          end
+
+          temp_db[table_name].import(headers, data, slice: 1000)
+          sleep 2
+        end
+      end
+      File.write("/tmp/script.sql", output.join("\n\n"))
+    end
+
     def fast_load_postgres
-      all_files.each do |table_name, headers, files|
+      all_files.each do |table_name, headers, files, delimiter|
+        puts "Loading #{table_name}..."
         db[table_name].truncate(cascade: true)
         files.each do |file|
           puts "Loading #{file} into #{table_name}(#{headers.join(", ")})"
@@ -62,6 +112,7 @@ module Loadmop
             {
               format:  :csv,
               columns: headers,
+              delimiter: delimiter,
               data:    File.binread(file),
             }.merge(postgres_copy_into_options)
           )
@@ -111,10 +162,31 @@ module Loadmop
           CSV.open(file, "rb", ruby_csv_options) do |csv|
             csv.each_slice(1000) do |rows|
               print '.'
-              db[table_name(table)].import(columns, rows)
+              p rows.first
+              p db.schema(table)
+              converted_rows = convert(table, columns, rows)
+              p converted_rows.first
+              db[table_name(table)].import(columns, converted_rows)
             end
           end
           puts
+        end
+      end
+    end
+
+    def convert(table, columns, rows)
+      schema_info = Hash[db.schema(table)]
+      rows.map do |row|
+        columns.map.with_index do |column, i|
+          next if row[i].nil?
+          case schema_info[column][:type]
+          when :integer
+            row[i].to_i
+          when :string
+            row[i]
+          else
+            raise schema_info[column][:type]
+          end
         end
       end
     end
@@ -132,15 +204,17 @@ module Loadmop
         file = Pathname.new(file.dirname.to_s.sub('split/', '') + '.csv')
       end
       header_line = File.open(file, 'rb', &:readline).downcase.gsub(/\|$/, '')
-      CSV.parse(header_line).first.map(&:to_sym)
+      delimiter = ','
+      delimiter = "\t" if header_line =~ Regexp.new("\t")
+      return CSV.parse_line(header_line, col_sep: delimiter).tap{|o|p o}.map(&:to_sym), delimiter
     end
 
     def lines_per_split
-      100000
+      10000
     end
 
     def additional_cleaning_steps
-      []
+      ['iconv -c -t UTF-8']
     end
 
     def make_all_files
@@ -148,7 +222,7 @@ module Loadmop
       split_dir.mkdir unless split_dir.exist?
       files_of_interest.map do |file|
         table_name = file.basename('.*').to_s.downcase.to_sym
-        headers = headers_for(file)
+        headers, delimiter = headers_for(file)
         dir = split_dir + table_name.to_s
         unless dir.exist?
           dir.mkdir
@@ -158,10 +232,12 @@ module Loadmop
             steps << "tail -n +2 #{file.expand_path}"
             steps += additional_cleaning_steps
             steps << "split -a 5 -l #{lines_per_split}"
-            system(steps.compact.join(" | "))
+            command = steps.compact.join(" | ")
+            puts command
+            system(command)
           end
         end
-        [table_name, headers, dir.children.sort]
+        [table_name, headers, dir.children.sort, delimiter]
       end
     end
 
