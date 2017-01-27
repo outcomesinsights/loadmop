@@ -2,23 +2,23 @@ require_relative 'loader'
 
 module Loadmop
   module Loaders
-  class VocabLoader < Loader
+    class VocabLoader < Loader
 
-    private
+      private
 
-    def files_of_interest
-      %w'vocabulary relationship concept concept_ancestor concept_relationship concept_synonym drug_strength source_to_concept_map'.map do |f|
-        Pathname.new(data_files_dir + "#{f.upcase}.csv")
-      end.select{|f| f.exist?}
-    end
+      def files_of_interest
+        %w'vocabulary relationship concept concept_ancestor concept_relationship concept_synonym drug_strength source_to_concept_map'.map do |f|
+          Pathname.new(data_files_dir + "#{f.upcase}.csv")
+        end.select{|f| f.exist?}
+      end
 
-    def postgres_copy_into_options
-      {options: "DELIMITER e'\\t', QUOTE e'\"'"}
-    end
+      def postgres_copy_into_options
+        {options: "DELIMITER e'\\t', QUOTE e'\"'"}
+      end
 
-    def ruby_csv_options
-      {col_sep: "\t", quote_char: 0o377.chr}
-    end
+      def ruby_csv_options
+        {col_sep: "\t", quote_char: 0o377.chr}
+      end
 
 =begin
     def make_all_files
@@ -41,16 +41,16 @@ module Loadmop
     end
 =end
 
-    def create_tables
-      vocabulary_table = table_name(:vocabulary)
-      concept_table = table_name(:concept)
-      relationship_table = table_name(:relationship)
+      def create_tables
+        vocabulary_table = table_name(:vocabulary)
+        concept_table = table_name(:concept)
+        relationship_table = table_name(:relationship)
 
-      create_schema_if_necessary
-      db.create_table?(table_name(:vocabulary)) do
-        Bignum :vocabulary_id, :primary_key=>true
-        String :vocabulary_name, :null=>false
-      end
+        create_schema_if_necessary
+        db.create_table?(table_name(:vocabulary)) do
+          Bignum :vocabulary_id, :primary_key=>true
+          String :vocabulary_name, :null=>false
+        end
 
 =begin
       db.create_table?(table_name(:relationship)) do
@@ -62,17 +62,17 @@ module Loadmop
       end
 =end
 
-      db.create_table?(table_name(:concept)) do
-        Bignum :concept_id, :primary_key=>true
-        String :concept_name, :null=>false
-        BigDecimal :concept_level, :null=>false
-        String :concept_class, :null=>false
-        Bignum :vocabulary_id, :null=>false
-        String :concept_code, :null=>false
-        Date :valid_start_date, :null=>false
-        Date :valid_end_date, :null=>false
-        String :invalid_reason, :size=>1, :fixed=>true
-      end
+        db.create_table?(table_name(:concept)) do
+          Bignum :concept_id, :primary_key=>true
+          String :concept_name, :null=>false
+          BigDecimal :concept_level, :null=>false
+          String :concept_class, :null=>false
+          Bignum :vocabulary_id, :null=>false
+          String :concept_code, :null=>false
+          Date :valid_start_date, :null=>false
+          Date :valid_end_date, :null=>false
+          String :invalid_reason, :size=>1, :fixed=>true
+        end
 
 =begin
       db.create_table?(table_name(:concept_ancestor)) do
@@ -121,43 +121,43 @@ module Loadmop
       end
 =end
 
-      db.create_table?(table_name(:source_to_concept_map)) do
-        String :source_code, :null=>false
-        Bignum :source_vocabulary_id
-        String :source_code_description
-        Bignum :target_concept_id
-        Bignum :target_vocabulary_id, :null=>false
-        String :mapping_type
-        String :primary_map, :size=>1, :fixed=>true
-        Date :valid_start_date, :null=>false
-        Date :valid_end_date, :null=>false
-        String :invalid_reason, :size=>1, :fixed=>true
+        db.create_table?(table_name(:source_to_concept_map)) do
+          String :source_code, :null=>false
+          Bignum :source_vocabulary_id
+          String :source_code_description
+          Bignum :target_concept_id
+          Bignum :target_vocabulary_id, :null=>false
+          String :mapping_type
+          String :primary_map, :size=>1, :fixed=>true
+          Date :valid_start_date, :null=>false
+          Date :valid_end_date, :null=>false
+          String :invalid_reason, :size=>1, :fixed=>true
 
-        #primary_key [:source_code, :source_vocabulary_id, :target_concept_id, :valid_end_date]
+          #primary_key [:source_code, :source_vocabulary_id, :target_concept_id, :valid_end_date]
+        end
+      end
+
+      def do_index(*args)
+        db.add_index(*args)
+      rescue
+        puts $!.message
+        #nothing
+      end
+
+      def create_indexes
+        do_index :concept, [:concept_code], name: "vocabulary_concept_concept_code_index"
+        do_index :concept, [:concept_id], name: "con_conid"
+        do_index :concept, [:vocabulary_id], name: "con_vocid"
+        do_index :concept_ancestor, [:ancestor_concept_id], name: "conanc_ancconid"
+        do_index :concept_ancestor, [:descendant_concept_id], name: "conanc_desconid"
+        do_index :concept_relationship, [:relationship_id], name: "conrel_relid"
+        do_index :relationship, [:relationship_id], name: "rel_relid"
+        do_index :source_to_concept_map, [:source_code, :source_vocabulary_id], name: "soutoconmap_soucod_souvocid"
+        do_index :source_to_concept_map, [:source_vocabulary_id], name: "soutoconmap_souvocid"
+        do_index :source_to_concept_map, [:target_concept_id], name: "soutoconmap_tarconid"
+        do_index :source_to_concept_map, [:target_vocabulary_id], name: "soutoconmap_tarvocid"
       end
     end
-
-    def do_index(*args)
-      db.add_index(*args)
-    rescue
-      puts $!.message
-      #nothing
-    end
-
-    def create_indexes
-      do_index :concept, [:concept_code], name: "vocabulary_concept_concept_code_index"
-      do_index :concept, [:concept_id], name: "con_conid"
-      do_index :concept, [:vocabulary_id], name: "con_vocid"
-      do_index :concept_ancestor, [:ancestor_concept_id], name: "conanc_ancconid"
-      do_index :concept_ancestor, [:descendant_concept_id], name: "conanc_desconid"
-      do_index :concept_relationship, [:relationship_id], name: "conrel_relid"
-      do_index :relationship, [:relationship_id], name: "rel_relid"
-      do_index :source_to_concept_map, [:source_code, :source_vocabulary_id], name: "soutoconmap_soucod_souvocid"
-      do_index :source_to_concept_map, [:source_vocabulary_id], name: "soutoconmap_souvocid"
-      do_index :source_to_concept_map, [:target_concept_id], name: "soutoconmap_tarconid"
-      do_index :source_to_concept_map, [:target_vocabulary_id], name: "soutoconmap_tarvocid"
-    end
   end
-end
 end
 

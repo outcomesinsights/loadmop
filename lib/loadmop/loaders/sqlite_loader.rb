@@ -33,4 +33,3 @@ module Loadmop
   end
 end
 
-
