@@ -1,6 +1,7 @@
 require_relative 'loader'
 
 module Loadmop
+  module Loaders
   class VocabLoader < Loader
 
     private
@@ -157,5 +158,6 @@ module Loadmop
       do_index :source_to_concept_map, [:target_vocabulary_id], name: "soutoconmap_tarvocid"
     end
   end
+end
 end
 

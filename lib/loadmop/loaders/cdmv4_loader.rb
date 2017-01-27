@@ -1,7 +1,8 @@
 require_relative 'loader'
 
 module Loadmop
-  class CDMv4Loader < Loader
+  module Loaders
+  class Cdmv4Loader < Loader
 
     private
 
@@ -405,4 +406,5 @@ module Loadmop
       end
     end
   end
+end
 end
