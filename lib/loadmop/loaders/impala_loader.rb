@@ -42,6 +42,10 @@ module Loadmop
         end
         File.write("/tmp/script.sql", output.join("\n\n"))
       end
+
+      def supports_indexes?
+        false
+      end
     end
   end
 end
