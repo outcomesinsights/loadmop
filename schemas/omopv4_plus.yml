@@ -25,7 +25,15 @@
   :location_source_value:
     :type: String
     :size: 50
-
+  :indexes:
+    :loc_locid:
+      :columns:
+      - location_id
+    :location_zip_county_key:
+      :unique: true
+      :columns:
+      - zip
+      - county
 :organization:
   :organization_id:
     :type: Bignum
@@ -46,7 +54,16 @@
   :place_of_service_source_value:
     :type: String
     :size: 50
-
+  :indexes:
+    :org_locid:
+      :columns:
+      - location_id
+    :org_orgid:
+      :columns:
+      - organization_id
+    :org_plaofserconid:
+      :columns:
+      - place_of_service_concept_id
 :care_site:
   :care_site_id:
     :type: Bignum
@@ -77,28 +94,27 @@
     :care_site_location_id_organization_id_place_of_service_sour_key:
       :unique: true
       :columns:
-        - location_id
-        - organization_id
-        - place_of_service_source_value
+      - location_id
+      - organization_id
+      - place_of_service_source_value
     :carsit_carsitid:
       :columns:
-        - :care_site_id
+      - :care_site_id
     :carsit_locid:
       :columns:
-        - location_id
+      - location_id
     :carsit_orgid:
       :columns:
-        - organization_id
+      - organization_id
     :carsit_plaofserconid:
       :columns:
-        - place_of_service_concept_id
+      - place_of_service_concept_id
     :idx_care_site_org_sources:
       :columns:
-        - location_id
-        - organization_id
-        - place_of_service_source_value
-        - care_site_id
-
+      - location_id
+      - organization_id
+      - place_of_service_source_value
+      - care_site_id
 :provider:
   :provider_id:
     :type: Bignum
@@ -126,7 +142,22 @@
   :specialty_source_value:
     :type: String
     :size: 50
-
+  :indexes:
+    :idx_provider_lkp:
+      :columns:
+      - provider_source_value
+      - specialty_source_value
+      - provider_id
+      - care_site_id
+    :pro_carsitid:
+      :columns:
+      - care_site_id
+    :pro_proid:
+      :columns:
+      - provider_id
+    :pro_speconid:
+      :columns:
+      - specialty_concept_id
 :person:
   :person_id:
     :type: Bignum
@@ -178,7 +209,28 @@
   :ethnicity_source_value:
     :type: String
     :size: 50
-
+  :indexes:
+    :per_carsitid:
+      :columns:
+      - care_site_id
+    :per_ethconid:
+      :columns:
+      - ethnicity_concept_id
+    :per_genconid:
+      :columns:
+      - ger_concept_id
+    :per_locid:
+      :columns:
+      - location_id
+    :per_perid:
+      :columns:
+      - person_id
+    :per_proid:
+      :columns:
+      - provider_id
+    :per_racconid:
+      :columns:
+      - race_concept_id
 :death:
   :person_id:
     :type: Bignum
@@ -203,7 +255,16 @@
   :cause_of_death_source_value:
     :type: String
     :size: 50
-
+  :indexes:
+    :dea_cauofdeaconid:
+      :columns:
+      - cause_of_death_concept_id
+    :dea_deatypconid:
+      :columns:
+      - death_type_concept_id
+    :dea_perid:
+      :columns:
+      - person_id
 :observation_period:
   :observation_period_id:
     :type: Bignum
@@ -220,7 +281,18 @@
     :null: false
   :prev_ds_period_end_date:
     :type: Date
-
+  :indexes:
+    :idx_observation_period_lkp:
+      :columns:
+      - person_id
+      - observation_period_start_date
+      - observation_period__date
+    :obsper_obsperid:
+      :columns:
+      - observation_period_id
+    :obsper_perid:
+      :columns:
+      - person_id
 :payer_plan_period:
   :payer_plan_period_id:
     :type: Bignum
@@ -246,7 +318,19 @@
     :size: 50
   :prev_ds_period_end_date:
     :type: Date
-
+  :indexes:
+    :idx_payer_plan_period_lkp:
+      :columns:
+      - person_id
+      - plan_source_value
+      - payer_plan_period_start_date
+      - payer_plan_period__date
+    :payplaper_payplaperid:
+      :columns:
+      - payer_plan_period_id
+    :payplaper_perid:
+      :columns:
+      - person_id
 :visit_occurrence:
   :visit_occurrence_id:
     :type: Bignum
@@ -264,7 +348,6 @@
   :place_of_service_concept_id:
     :type: Bignum
     :foreign_key: concept
-    #:null: false
   :place_of_service_source_vocabulary_id:
     :type: Bignum
     :foreign_key: vocabulary
@@ -283,7 +366,24 @@
   :admitting_source_value:
     :type: String
     :size: 50
-
+  :indexes:
+    :visit_occurrence_person_id_visit_start_date_place_of_servic_key:
+      :columns:
+      - person_id
+      - visit_start_date
+      - place_of_service_concept_id
+    :visocc_carsitid:
+      :columns:
+      - care_site_id
+    :visocc_perid:
+      :columns:
+      - person_id
+    :visocc_plaofserconid:
+      :columns:
+      - place_of_service_concept_id
+    :visocc_visoccid:
+      :columns:
+      - visit_occurrence_id
 :condition_occurrence:
   :condition_occurrence_id:
     :type: Bignum
@@ -320,7 +420,34 @@
   :condition_source_value:
     :type: String
     :size: 50
-
+  :indexes:
+    :cci:
+      :columns:
+      - condition_concept_id
+    :conocc_assproid:
+      :columns:
+      - associated_provider_id
+    :conocc_conconid:
+      :columns:
+      - condition_concept_id
+    :conocc_conoccid:
+      :columns:
+      - condition_occurrence_id
+    :conocc_consouval:
+      :columns:
+      - condition_source_value
+    :conocc_contypconid:
+      :columns:
+      - condition_type_concept_id
+    :conocc_perid:
+      :columns:
+      - person_id
+    :conocc_visoccid:
+      :columns:
+      - visit_occurrence_id
+    :voi:
+      :columns:
+      - visit_occurrence_id
 :drug_exposure:
   :drug_exposure_id:
     :type: Bignum
@@ -369,7 +496,28 @@
   :drug_source_value:
     :type: String
     :size: 50
-
+  :indexes:
+    :druexp_druconid:
+      :columns:
+      - drug_concept_id
+    :druexp_druexpid:
+      :columns:
+      - drug_exposure_id
+    :druexp_drutypconid:
+      :columns:
+      - drug_type_concept_id
+    :druexp_perid:
+      :columns:
+      - person_id
+    :druexp_preproid:
+      :columns:
+      - prescribing_provider_id
+    :druexp_relconconid:
+      :columns:
+      - relevant_condition_concept_id
+    :druexp_visoccid:
+      :columns:
+      - visit_occurrence_id
 :drug_cost:
   :drug_cost_id:
     :type: Bignum
@@ -401,7 +549,16 @@
   :payer_plan_period_id:
     :type: Bignum
     :foreign_key: payer_plan_period
-
+  :indexes:
+    :drucos_drucosid:
+      :columns:
+      - drug_cost_id
+    :drucos_druexpid:
+      :columns:
+      - drug_exposure_id
+    :drucos_payplaperid:
+      :columns:
+      - payer_plan_period_id
 :procedure_occurrence:
   :procedure_occurrence_id:
     :type: Bignum
@@ -436,7 +593,31 @@
   :procedure_source_value:
     :type: String
     :size: 50
-
+  :indexes:
+    :proocc_assproid:
+      :columns:
+      - associated_provider_id
+    :proocc_perid:
+      :columns:
+      - person_id
+    :proocc_proconid:
+      :columns:
+      - procedure_concept_id
+    :proocc_prooccid:
+      :columns:
+      - procedure_occurrence_id
+    :proocc_prosouval:
+      :columns:
+      - procedure_source_value
+    :proocc_protypconid:
+      :columns:
+      - procedure_type_concept_id
+    :proocc_relconconid:
+      :columns:
+      - relevant_condition_concept_id
+    :proocc_visoccid:
+      :columns:
+      - visit_occurrence_id
 :procedure_cost:
   :procedure_cost_id:
     :type: Bignum
@@ -474,7 +655,22 @@
   :revenue_code_source_value:
     :type: String
     :size: 50
-
+  :indexes:
+    :procos_disclaconid:
+      :columns:
+      - disease_class_concept_id
+    :procos_payplaperid:
+      :columns:
+      - payer_plan_period_id
+    :procos_procosid:
+      :columns:
+      - procedure_cost_id
+    :procos_prooccid:
+      :columns:
+      - procedure_occurrence_id
+    :procos_revcodconid:
+      :columns:
+      - revenue_code_concept_id
 :observation:
   :observation_id:
     :type: Bignum
@@ -529,7 +725,34 @@
   :unit_source_value:
     :type: String
     :size: 50
-
+  :indexes:
+    :obs_assproid:
+      :columns:
+      - associated_provider_id
+    :obs_obsconid:
+      :columns:
+      - observation_concept_id
+    :obs_obsid:
+      :columns:
+      - observation_id
+    :obs_obstypconid:
+      :columns:
+      - observation_type_concept_id
+    :obs_perid:
+      :columns:
+      - person_id
+    :obs_relconconid:
+      :columns:
+      - relevant_condition_concept_id
+    :obs_uniconid:
+      :columns:
+      - unit_concept_id
+    :obs_valasconid:
+      :columns:
+      - value_as_concept_id
+    :obs_visoccid:
+      :columns:
+      - visit_occurrence_id
 :concept:
   :concept_id:
     :type: Bignum
@@ -551,14 +774,12 @@
     :type: Date
   :invalid_reason:
     :type: String
-
 :vocabulary:
   :vocabulary_id:
     :type: Bignum
     :primary_key: true
   :vocabulary_name:
     :type: String
-
 :source_to_concept_map:
   :source_code:
     :type: String
@@ -583,7 +804,6 @@
     :type: Date
   :invalid_reason:
     :type: String
-
 :cohort:
   :cohort_id:
     :type: Bignum
@@ -606,15 +826,13 @@
   :indexes:
     :coh_cohconid:
       :columns:
-        - cohort_concept_id
+      - cohort_concept_id
     :coh_cohid:
       :columns:
-        - cohort_id
+      - cohort_id
     :coh_subid:
       :columns:
-        - subject_id
-
-
+      - subject_id
 :condition_era:
   :condition_era_id:
     :type: Bignum
@@ -642,7 +860,19 @@
     :null: false
   :condition_occurrence_count:
     :type: Integer
-
+  :indexes:
+    :conera_conconid:
+      :columns:
+      - condition_concept_id
+    :conera_coneraid:
+      :columns:
+      - condition_era_id
+    :conera_contypconid:
+      :columns:
+      - condition_type_concept_id
+    :conera_perid:
+      :columns:
+      - person_id
 :drug_era:
   :drug_era_id:
     :type: Bignum
@@ -670,3 +900,16 @@
     :null: false
   :drug_exposure_count:
     :type: Integer
+  :indexes:
+    :druera_druconid:
+      :columns:
+      - drug_concept_id
+    :druera_drueraid:
+      :columns:
+      - drug_era_id
+    :druera_drutypconid:
+      :columns:
+      - drug_type_concept_id
+    :druera_perid:
+      :columns:
+      - person_id
