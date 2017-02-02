@@ -1,3 +1,5 @@
+require_relative 'loader'
+
 module Loadmop
   module Loaders
     class MssqlLoader < Loader

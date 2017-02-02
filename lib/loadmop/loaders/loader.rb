@@ -2,6 +2,7 @@ require 'pathname'
 require 'csv'
 require 'sequelizer'
 require_relative '../data_filer'
+require 'benchmark'
 
 module Loadmop
   module Loaders
@@ -33,22 +34,33 @@ module Loadmop
         data_filer.all_files
       end
 
+      def load_file_set(table, columns, files, delimiter = ",")
+        files.each do |file|
+          puts "Loading #{file} into #{table}"
+          CSV.open(file, "rb", {}) do |csv|
+            csv.each_slice(1000) do |rows|
+              print '.'
+              p rows.first
+              p db.schema(table)
+              converted_rows = convert(table, columns, rows)
+              p converted_rows.first
+              db[table].import(columns, converted_rows)
+            end
+          end
+          puts
+        end
+      end
+
       def load_files
         all_files.each do |table, columns, files|
-          files.each do |file|
-            puts "Loading #{file} into #{table}"
-            CSV.open(file, "rb", {}) do |csv|
-              csv.each_slice(1000) do |rows|
-                print '.'
-                p rows.first
-                p db.schema(table)
-                converted_rows = convert(table, columns, rows)
-                p converted_rows.first
-                db[table_name(table)].import(columns, converted_rows)
-              end
-            end
-            puts
-          end
+          table = table_name(table)
+          orig_count = db[table].count
+          puts "Loading #{table}..."
+          elapsed = Benchmark.realtime do
+	    load_file_set(table, columns, files)
+	  end
+          count = db[table].count - orig_count
+          puts "Loaded #{count} records into #{table} in #{elapsed} seconds #{count/elapsed} rec/sec"
         end
       end
 

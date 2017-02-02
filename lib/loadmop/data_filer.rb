@@ -6,7 +6,7 @@ module Loadmop
   module DataFiler
     def self.data_filer(string, loader)
       case string
-      when /^s3/
+      when %r{s3}
         S3Filer.new(string, loader)
       else
         PathFiler.new(string, loader)
@@ -100,7 +100,7 @@ module Loadmop
 
       def get_header_line(file)
         puts file
-        `s3cmd get #{file} - | head`.split("\n").tap { |a| p a }.select { |line| line =~ /[,\t]/ }.first.tap { |l| puts "HEADER: #{l}"}
+        `./bin/s3curl.pl --id=personal -- --range 0-1000 '#{s3_as_url(file)}' | head`.split("\n").first
       end
 
       def matching_folders
@@ -118,6 +118,11 @@ module Loadmop
         @folders ||= `aws s3 ls #{@source}`.split("\n").map do |line|
           line.strip.split(/\s+/).last.chop
         end
+      end
+
+      def s3_as_url(file)
+	u = URI(file)
+        "http://#{u.host}.s3.amazonaws.com#{u.path}"
       end
     end
   end

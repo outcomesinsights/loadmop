@@ -1,23 +1,19 @@
 module Loadmop
   module Loaders
     class SqliteLoader < Loader
-      def load_files
-        return nil if `which sqlite3` =~ /not found/i
-        all_files.each do |table_name, files|
-          run_sqlite_commands(%Q(DELETE FROM #{table_name};))
-          commands = []
-          commands << %Q(.echo on)
-          commands << %Q(.log stdout)
-          commands << %Q(.mode csv)
-          commands << "placeholder"
-          files.each do |file|
-            puts "Loading #{file} into #{table_name}"
-            commands.pop
-            commands << ".import #{file} #{table_name}"
-            run_sqlite_commands(commands)
-          end
+      def load_file_set(table_name, headers, files, delimiter = ",")
+        run_sqlite_commands(%Q(DELETE FROM #{table_name};))
+        commands = []
+        commands << %Q(.echo on)
+        commands << %Q(.log stdout)
+        commands << %Q(.mode csv)
+        commands << "placeholder"
+        files.each do |file|
+          puts "Loading #{file} into #{table_name}"
+          commands.pop
+          commands << ".import #{file} #{table_name}"
+          run_sqlite_commands(commands)
         end
-        true
       end
 
       def run_sqlite_commands(*commands)

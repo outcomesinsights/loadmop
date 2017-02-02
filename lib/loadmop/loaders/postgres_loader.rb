@@ -10,23 +10,20 @@ module Loadmop
         db.execute("SET search_path TO #{options[:search_path]}")
       end
 
-      def load_files
-        all_files.each do |table_name, headers, files, delimiter|
-          puts "Loading #{table_name}..."
-          db[table_name].truncate(cascade: true)
-          files.each do |file|
-            puts "Loading #{file} into #{table_name}(#{headers.join(", ")})"
-            file = File.binread(file) unless file.is_a?(IO)
-            db.copy_into(
-              table_name, {
-                format:  :csv,
-                columns: headers,
-                delimiter: delimiter,
-                data: file,
-              }.merge(postgres_copy_into_options)
-            )
-          end
-          puts " #{db[table_name].count} loaded"
+
+      def load_file_set(table_name, headers, files, delimiter = ",")
+        db[table_name].truncate(cascade: true)
+        files.each do |file|
+          puts "Loading #{file} into #{table_name}(#{headers.join(", ")})"
+          file = File.binread(file) unless file.is_a?(IO)
+          db.copy_into(
+            table_name, {
+              format:  :csv,
+              columns: headers,
+              delimiter: delimiter,
+              data: file,
+            }.merge(postgres_copy_into_options)
+          )
         end
       end
 
