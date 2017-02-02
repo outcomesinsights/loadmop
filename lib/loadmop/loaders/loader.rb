@@ -7,21 +7,24 @@ require 'benchmark'
 module Loadmop
   module Loaders
     class Loader
-      attr :db, :options, :data_filer, :data_model_name, :force
+      attr :db, :options, :data_filer, :data_model_name, :force, :tables, :data, :indexes
 
       def initialize(db, data_files_path, options = {})
         @data_filer = Loadmop::DataFiler.data_filer(data_files_path, self).tap { |o| p o.files }
         @data_model_name = options.delete(:data_model) or raise "You need to specify a data model"
         @force = options.delete(:force)
+        @tables = options.delete(:tables)
+        @data = options.delete(:data)
+        @indexes = options.delete(:indexes)
         @options = options
         @db = db
       end
 
       def create_database
         create_schema_if_necessary
-        create_tables
-        load_files
-        create_indexes if supports_indexes?
+        create_tables if tables
+        load_files if data
+        create_indexes if indexes && supports_indexes?
       end
 
       def data_model

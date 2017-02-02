@@ -37,6 +37,21 @@ module Loadmop
       type: :boolean,
       default: false,
       desc: 'Force all tables to be recreated'
+    class_option :tables,
+      aliases: :t,
+      type: :boolean,
+      default: true,
+      desc: "Create tables"
+    class_option :data,
+      aliases: :d,
+      type: :boolean,
+      default: true,
+      desc: "Load data"
+    class_option :indexes,
+      aliases: :i,
+      type: :boolean,
+      default: true,
+      desc: "Create indexes"
 
     desc 'create {omopv4, omopv4_plus, vocab} database_name files_dir', 'Creates the tables specified in database_name and loads the files specified into them'
     def create(schema, database_name, files_dir)
