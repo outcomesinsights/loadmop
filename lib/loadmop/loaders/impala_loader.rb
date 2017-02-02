@@ -2,6 +2,7 @@ module Loadmop
   module Loaders
     class ImpalaLoader < Loader
       def load_file_set(table_name, headers, files, delimiter = ',')
+=begin
         types = db.schema(table_name).map{|col,s| [col, s[:db_type]]}
         types = Hash[types]
         types = types.values_at(*headers)
@@ -37,6 +38,7 @@ module Loadmop
           temp_db[table_name].import(headers, data, slice: 1000)
           sleep 2
         end
+=end
       end
 
       def supports_indexes?
