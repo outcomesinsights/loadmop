@@ -81,19 +81,19 @@ module Loadmop
         post_create_tables if respond_to?(:post_create_tables)
       end
 
-      def indexes
-        @indexes ||= Hash[
+      def indices
+        @indices ||= Hash[
           data_model.map do |table_name, columns|
-            indices = columns[:indexes]
-            next unless indices
-            [table_name, indices]
+            table_indices = columns[:indexes]
+            next unless table_indices
+            [table_name, table_indices]
           end.compact
         ]
       end
 
       def create_indexes
-        indexes.each do |table_name, indices|
-          indices.each do |index_name, details|
+        indices.each do |table_name, table_indices|
+          table_indices.each do |index_name, details|
             columns = details.delete(:columns).map(&:to_sym)
             db.add_index(table_name, columns, { name: index_name }.merge(details))
           end
