@@ -39,16 +39,17 @@ module Loadmop
           puts table_name
           person_id = columns[:person_id]
           next unless person_id
-          next if %i(person death).include?(table_name)
-          Sequel.extension :migration
-          Sequel.migration do
-            change do
-              alter_table(table_name) do
-                drop_constraint("#{table_name}_pkey", cascade: true) rescue "Failed to remove pkey"
-                add_primary_key(["#{table_name}_id".to_sym, :person_id])
+          unless %i(person death).include?(table_name)
+            Sequel.extension :migration
+            Sequel.migration do
+              change do
+                alter_table(table_name) do
+                  drop_constraint("#{table_name}_pkey", cascade: true) rescue "Failed to remove pkey"
+                  add_primary_key(["#{table_name}_id".to_sym, :person_id])
+                end
               end
-            end
-          end.apply(db, :up)
+            end.apply(db, :up)
+          end
           puts db["SELECT create_distributed_table('#{table_name}', 'person_id')"].all
         end
       end
