@@ -265,6 +265,10 @@
     :dea_perid:
       :columns:
       - person_id
+    :dea_cauofdeasource:
+      :columns:
+      - death_type_source_vocabulary_id
+      - cause_of_death_source_value
 :observation_period:
   :observation_period_id:
     :type: Bignum
@@ -384,6 +388,10 @@
     :visocc_visoccid:
       :columns:
       - visit_occurrence_id
+    :visit_source_vocab:
+      :columns:
+      - place_of_service_source_vocabulary_id
+      - place_of_service_source_value
 :condition_occurrence:
   :condition_occurrence_id:
     :type: Bignum
@@ -421,9 +429,6 @@
     :type: String
     :size: 50
   :indexes:
-    :cci:
-      :columns:
-      - condition_concept_id
     :conocc_assproid:
       :columns:
       - associated_provider_id
@@ -436,6 +441,7 @@
     :conocc_consouval:
       :columns:
       - condition_source_value
+      - condition_source_vocabulary_id
     :conocc_contypconid:
       :columns:
       - condition_type_concept_id
@@ -443,9 +449,6 @@
       :columns:
       - person_id
     :conocc_visoccid:
-      :columns:
-      - visit_occurrence_id
-    :voi:
       :columns:
       - visit_occurrence_id
 :drug_exposure:
@@ -500,6 +503,10 @@
     :druexp_druconid:
       :columns:
       - drug_concept_id
+    :druexp_source_value:
+      :columns:
+      - drug_source_value
+      - drug_source_vocabulary_id
     :druexp_druexpid:
       :columns:
       - drug_exposure_id
@@ -512,9 +519,6 @@
     :druexp_preproid:
       :columns:
       - prescribing_provider_id
-    :druexp_relconconid:
-      :columns:
-      - relevant_condition_concept_id
     :druexp_visoccid:
       :columns:
       - visit_occurrence_id
@@ -609,12 +613,10 @@
     :proocc_prosouval:
       :columns:
       - procedure_source_value
+      - procedure_source_vocabulary_id
     :proocc_protypconid:
       :columns:
       - procedure_type_concept_id
-    :proocc_relconconid:
-      :columns:
-      - relevant_condition_concept_id
     :proocc_visoccid:
       :columns:
       - visit_occurrence_id
@@ -735,6 +737,10 @@
     :obs_obsid:
       :columns:
       - observation_id
+    :obs_source_value:
+      :columns:
+      - observation_source_value
+      - observation_source_vocabulary_id
     :obs_obstypconid:
       :columns:
       - observation_type_concept_id
