@@ -218,7 +218,7 @@
       - ethnicity_concept_id
     :per_genconid:
       :columns:
-      - ger_concept_id
+      - gender_concept_id
     :per_locid:
       :columns:
       - location_id
@@ -286,7 +286,7 @@
       :columns:
       - person_id
       - observation_period_start_date
-      - observation_period__date
+      - observation_period_end_date
     :obsper_obsperid:
       :columns:
       - observation_period_id
@@ -324,7 +324,7 @@
       - person_id
       - plan_source_value
       - payer_plan_period_start_date
-      - payer_plan_period__date
+      - payer_plan_period_end_date
     :payplaper_payplaperid:
       :columns:
       - payer_plan_period_id
