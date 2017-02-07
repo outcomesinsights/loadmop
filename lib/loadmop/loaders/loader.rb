@@ -12,6 +12,7 @@ module Loadmop
       def initialize(db, data_files_path, options = {})
         @data_filer = Loadmop::DataFiler.data_filer(data_files_path, self).tap { |o| p o.files }
         @data_model_name = options.delete(:data_model) or raise "You need to specify a data model"
+        p options
         @force = options.delete(:force)
         @tables = options.delete(:tables)
         @data = options.delete(:data)
@@ -60,8 +61,8 @@ module Loadmop
           orig_count = db[table].count
           puts "Loading #{table}..."
           elapsed = Benchmark.realtime do
-	    load_file_set(table, columns, files)
-	  end
+            load_file_set(table, columns, files)
+          end
           count = db[table].count - orig_count
           puts "Loaded #{count} records into #{table} in #{elapsed} seconds #{count/elapsed} rec/sec"
         end
@@ -94,8 +95,16 @@ module Loadmop
       def create_indexes
         indices.each do |table_name, table_indices|
           table_indices.each do |index_name, details|
+            puts "Creating index '#{index_name}' for table #{table_name}..."
             columns = details.delete(:columns).map(&:to_sym)
-            db.add_index(table_name, columns, { name: index_name }.merge(details))
+            elapsed = Benchmark.realtime do
+              begin
+                db.add_index(table_name, columns, { name: index_name }.merge(details))
+              rescue Sequel::DatabaseError, PG::DuplicateTable
+                puts $!.message
+              end
+            end
+            puts "Took #{elapsed}"
           end
         end
       end
