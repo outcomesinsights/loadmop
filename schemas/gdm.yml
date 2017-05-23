@@ -182,6 +182,15 @@
     :type: Date
     :comment: End date of record (yyyy-mm-dd)
     :null: false
+  :duration:
+    :type: Float
+    :comment: Duration of collection. (e.g. hospitalization length of stay)
+    :null: false
+  :duration_unit_concept_id:
+    :type: :Bigint
+    :comment: FK reference to [concepts](#concepts) table representing the unit of
+      duration (hours, days, weeks etc.)
+    :null: false
   :facility_id:
     :type: :Bigint
     :comment: FK reference to [facilities](#facilities) table
@@ -191,6 +200,12 @@
     :type: :Bigint
     :comment: FK reference to [admission_details](#admission_details) table
     :foreign_key: admission_details
+    :null: false
+  :collection_type_concept_id:
+    :type: :Bigint
+    :comment: FK reference to [concepts](#concepts) table representing the type of
+      collection this record represents
+    :foreign_key: concepts
     :null: false
 :contexts](#contexts)_[practitioners:
   :context_id:
@@ -203,10 +218,9 @@
     :comment: FK reference to [practitioners](#practitioners) table
     :foreign_key: practitioners
     :null: false
-  :role_type_id:
+  :role_type_concept_id:
     :type: String
-    :comment: Roles [practitioners](#practitioners) can play in an encounter (currently
-      a text field)
+    :comment: Roles [practitioners](#practitioners) can play in an encounter
     :null: false
   :specialty_type_concept_id:
     :type: :Bigint
@@ -260,23 +274,16 @@
       file from which the record was pulled
     :foreign_key: concepts
     :null: false
-  :address_id:
-    :type: :Bigint
-    :comment: FK reference to [addresses](#addresses) table representing the location
-      of the service. If the service location can not be determined this should be
-      set to missing.
-    :foreign_key: addresses
-    :null: false
   :service_specialty_type_concept_id:
     :type: :Bigint
     :comment: FK reference to [concepts](#concepts) table representing the specialty
       type for the services/diagnoses associated with this record
     :foreign_key: concepts
     :null: false
-  :type_concept_id:
+  :record_type_concept_id:
     :type: :Bigint
     :comment: FK reference to [concepts](#concepts) table representing the type of
-      [contexts](#contexts) the record is (line, claim, etc.)
+      [contexts](#contexts) the record represents (line, claim, etc.)
     :foreign_key: concepts
     :null: false
 :clinical_codes:
@@ -323,9 +330,10 @@
     :comment: The sequence number for the variable assigned (e.g. dx3 gets sequence
       number 3)
     :null: false
-  :type_concept_id:
+  :provenance_concept_id:
     :type: :Bigint
-    :comment: 'Additional type information (ex: primary or admitting)'
+    :comment: 'Additional type information (ex: primary, admitting, problem list,
+      etc)'
     :foreign_key: concepts
     :null: false
   :clinical_code_source_value:
@@ -337,17 +345,21 @@
     :comment: Vocabulary the clinical code comes from
     :foreign_key: vocabularies
     :null: false
+  :measurement_detail_id:
+    :type: :Bigint
+    :comment: FK reference to [measurement_details](#measurement_details) table
+    :foreign_key: measurement_details
+    :null: false
+  :drug_exposure_detail_id:
+    :type: :Bigint
+    :comment: FK reference to [drug_exposure_details](#drug_exposure_details) table
+    :foreign_key: drug_exposure_details
+    :null: false
 :measurement_details:
   :id:
     :type: :Bigint
     :primary_key: true
     :comment: Surrogate key for record
-    :null: false
-  :clinical_code_id:
-    :type: :Bigint
-    :comment: FK reference to [clinical_codes](#clinical_codes) table to the associated
-      clinical code
-    :foreign_key: clinical_codes
     :null: false
   :patient_id:
     :type: :Bigint
@@ -409,12 +421,6 @@
     :primary_key: true
     :comment: Surrogate key for record
     :null: false
-  :clinical_code_id:
-    :type: :Bigint
-    :comment: FK reference to [clinical_codes](#clinical_codes) table to the associated
-      clinical code
-    :foreign_key: clinical_codes
-    :null: false
   :patient_id:
     :type: :Bigint
     :comment: FK to reference to [patients](#patients) table
@@ -430,6 +436,10 @@
     :comment: The number of days of supply as recorded in the original prescription
       or dispensing record
     :null: false
+  :number_per_day:
+    :type: Float
+    :comment: The number of pills taken per day
+    :null: false
   :dose_form_concept_id:
     :type: :Bigint
     :comment: FK reference to [concepts](#concepts) table for the form of the drug
@@ -442,6 +452,12 @@
       dose_value is expressed
     :foreign_key: concepts
     :null: false
+  :route_concept_id:
+    :type: :Bigint
+    :comment: FK reference to [concepts](#concepts) table for route in which drug
+      is given
+    :foreign_key: concepts
+    :null: false
   :dose_value:
     :type: Float
     :comment: Numeric value for the dose of the drug
@@ -451,13 +467,13 @@
     :comment: Drug strength as reported in the raw data. This can include both dose
       value and units
     :null: false
-  :generic_name_source_value:
+  :ingredient_source_value:
     :type: String
-    :comment: Generic name of drug as reported in the raw data
+    :comment: Ingredient/Generic name of drug as reported in the raw data
     :null: false
-  :brand_name_source_value:
+  :drug_name_source_value:
     :type: String
-    :comment: Brand name of drug as reported in the raw data
+    :comment: Product/Brand name of drug as reported in the raw data
     :null: false
 :costs:
   :id:
@@ -628,7 +644,7 @@
     :null: false
   :county:
     :type: String
-    :comment: The county
+    :comment: The county, if available
     :null: false
   :census_tract:
     :type: String
@@ -636,7 +652,12 @@
     :null: false
   :hsa:
     :type: String
-    :comment: The Health Service Area if available
+    :comment: The Health Service Area, if available (originally defined by the National
+      Center for Health Statistics)
+    :null: false
+  :country:
+    :type: String
+    :comment: The country if necessary
     :null: false
 :deaths:
   :id:
@@ -714,19 +735,16 @@
     :type: Date
     :comment: Date of discharge (yyyy-mm-dd)
     :null: false
-  :admit_source_id:
-    :type: Integer
+  :admit_source_concept_id:
+    :type: :Bigint
     :comment: Database specific code indicating source of admission (e.g., ER visit,
       transfer, etc.)
     :null: false
-  :discharge_location_id:
+  :discharge_location_concept_id:
     :type: :Bigint
-    :comment: Database specific code indicating source of discharge (e.g., death,
-      home, transfer, long-term care, etc.)
-  :los:
-    :type: Integer
-    :comment: Length of stay
-  :type_concept_id:
+    :comment: Database specific code indicating discharge location (e.g., death, home,
+      transfer, long-term care, etc.)
+  :admission_type_concept_id:
     :type: :Bigint
     :comment: FK reference to [concepts](#concepts) table representing the type of
       admission the record is (Emergency, Elective, etc.)
