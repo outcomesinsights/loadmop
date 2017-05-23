@@ -75,12 +75,10 @@
   :primary_identifier:
     :type: String
     :comment: Primary practitioner identifier
-    :null: false
   :primary_identifier_type:
     :type: String
     :comment: Type of identifier specified in primary identifier field (UPIN, NPI,
       etc)
-    :null: false
   :secondary_identifier:
     :type: String
     :comment: Secondary practitioner identifier (Optional)
@@ -118,12 +116,10 @@
   :primary_identifier:
     :type: String
     :comment: Primary facility identifier
-    :null: false
   :primary_identifier_type:
     :type: String
     :comment: Type of identifier specified in primary identifier field (UPIN, NPI,
       etc)
-    :null: false
   :secondary_identifier:
     :type: String
     :comment: Secondary facility identifier (Optional)
@@ -163,7 +159,6 @@
   :end_date:
     :type: Date
     :comment: End date of record (yyyy-mm-dd)
-    :null: false
   :duration:
     :type: Float
     :comment: Duration of collection. (e.g. hospitalization length of stay)
@@ -184,7 +179,7 @@
     :comment: FK reference to [concepts](#concepts) table representing the type of
       collection this record represents
     :foreign_key: concepts
-:contexts](#contexts)_[practitioners:
+:contexts_practitioners:
   :context_id:
     :type: :Bigint
     :comment: FK reference to [contexts](#contexts) table
@@ -226,7 +221,6 @@
   :end_date:
     :type: Date
     :comment: End date of record (yyyy-mm-dd)
-    :null: false
   :facility_id:
     :type: :Bigint
     :comment: FK reference to [facilities](#facilities) table
@@ -286,7 +280,6 @@
   :end_date:
     :type: Date
     :comment: End date of record (yyyy-mm-dd)
-    :null: false
   :clinical_code_concept_id:
     :type: :Bigint
     :comment: FK reference to [concepts](#concepts) table for the code assigned to
@@ -656,7 +649,6 @@
   :discharge_date:
     :type: Date
     :comment: Date of discharge (yyyy-mm-dd)
-    :null: false
   :admit_source_concept_id:
     :type: :Bigint
     :comment: Database specific code indicating source of admission (e.g., ER visit,
