@@ -51,7 +51,7 @@ module Loadmop
       default: true,
       desc: "Create indexes"
 
-    desc 'create {omopv4, omopv4_plus, vocab} database_name files_dir', 'Creates the tables specified in database_name and loads the files specified into them'
+    desc 'create {omopv4, omopv4_plus, gdm, vocab} database_name files_dir', 'Creates the tables specified in database_name and loads the files specified into them'
     def create(schema, database_name, files_dir)
       Loadmop.create_database(schema, database_name, files_dir, options)
     end
