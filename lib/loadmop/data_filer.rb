@@ -7,16 +7,16 @@ module Loadmop
     def self.data_filer(string, loader)
       case string
       when %r{s3}
-        S3Filer.new(string, loader)
+        S3Filer.new(URI(string.chomp("/")), loader)
       else
-        PathFiler.new(string, loader)
+        PathFiler.new(Pathname.new(string), loader)
       end
     end
 
     class Filer
       attr :source, :loader
-      def initialize(string, loader)
-        @source = URI(string.chomp("/"))
+      def initialize(source, loader)
+        @source = source
         @loader = loader
       end
 
@@ -42,8 +42,7 @@ module Loadmop
 
     class PathFiler < Filer
       def files_of_interest
-        dir = Pathname.new(source)
-        loader.data_model.keys.map { |k| dir + "#{k}.csv"}.select(&:exist?)
+        loader.data_model.keys.map { |k| source + "#{k}.csv"}.select(&:exist?)
       end
 
       def get_header_line(file)
