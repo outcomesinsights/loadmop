@@ -10,35 +10,29 @@
     :comment: A foreign key that refers to an identifier in the [concepts](#concepts)
       table for the unique gender of the patient
     :foreign_key: concepts
-    :null: false
   :birth_date:
     :type: Date
     :comment: Date of birth (yyyy-mm-dd)
-    :null: false
   :race_concept_id:
     :type: :Bigint
     :comment: A foreign key that refers to an identifier in the [concepts](#concepts)
       table for the unique race of the patient
     :foreign_key: concepts
-    :null: false
   :ethnicity_concept_id:
     :type: :Bigint
     :comment: A foreign key that refers to an identifier in the [concepts](#concepts)
       table for the ethnicity of the patient
     :foreign_key: concepts
-    :null: false
   :address_id:
     :type: :Bigint
     :comment: A foreign key to the place of residency for the patient in the location
       table, where the detailed address information is stored
     :foreign_key: addresses
-    :null: false
   :practitioner_id:
     :type: :Bigint
     :comment: A foreign key to the primary care practitioner the patient is seeing
       in the [practitioners](#practitioners) table
     :foreign_key: practitioners
-    :null: false
   :patient_id_source_value:
     :type: String
     :comment: Originial patient identifier defined in the source data
@@ -78,7 +72,6 @@
   :practitioner_name:
     :type: String
     :comment: "[practitioners](#practitioners) name, if available"
-    :null: false
   :primary_identifier:
     :type: String
     :comment: Primary practitioner identifier
@@ -91,34 +84,28 @@
   :secondary_identifier:
     :type: String
     :comment: Secondary practitioner identifier (Optional)
-    :null: false
   :secondary_identifier_type:
     :type: String
     :comment: Type of identifier specified in secondary identifier field (UPIN, NPI,
       etc)
-    :null: false
   :specialty_concept_id:
     :type: :Bigint
     :comment: A foreign key to an identifier in the [concepts](#concepts) table for
       specialty
     :foreign_key: concepts
-    :null: false
   :address_id:
     :type: :Bigint
     :comment: A foreign key to the address of the location where the practitioner
       is practicing
     :foreign_key: addresses
-    :null: false
   :birth_date:
     :type: Date
     :comment: Date of birth (yyyy-mm-dd)
-    :null: false
   :gender_concept_id:
     :type: :Bigint
     :comment: A foreign key that refers to an identifier in the [concepts](#concepts)
       table for the unique gender of the person
     :foreign_key: concepts
-    :null: false
 :facilities:
   :id:
     :type: :Bigint
@@ -128,7 +115,6 @@
   :facility_name:
     :type: String
     :comment: Facility name, if available
-    :null: false
   :primary_identifier:
     :type: String
     :comment: Primary facility identifier
@@ -141,7 +127,6 @@
   :secondary_identifier:
     :type: String
     :comment: Secondary facility identifier (Optional)
-    :null: false
   :secondary_identifier_type:
     :type: String
     :comment: Type of identifier specified in secondary identifier field (UPIN, NPI,
@@ -151,18 +136,15 @@
     :comment: FK reference to [concepts](#concepts) table representing the facility
       type
     :foreign_key: concepts
-    :null: false
   :specialty_concept_id:
     :type: :Bigint
     :comment: A foreign key to an identifier in the [concepts](#concepts) table for
       specialty
     :foreign_key: concepts
-    :null: false
   :address_id:
     :type: :Bigint
     :comment: A foreign key to the address of the location of the facility
     :foreign_key: addresses
-    :null: false
 :collections:
   :id:
     :type: :Bigint
@@ -185,28 +167,23 @@
   :duration:
     :type: Float
     :comment: Duration of collection. (e.g. hospitalization length of stay)
-    :null: false
   :duration_unit_concept_id:
     :type: :Bigint
     :comment: FK reference to [concepts](#concepts) table representing the unit of
       duration (hours, days, weeks etc.)
-    :null: false
   :facility_id:
     :type: :Bigint
     :comment: FK reference to [facilities](#facilities) table
     :foreign_key: facilities
-    :null: false
   :admission_detail_id:
     :type: :Bigint
     :comment: FK reference to [admission_details](#admission_details) table
     :foreign_key: admission_details
-    :null: false
   :collection_type_concept_id:
     :type: :Bigint
     :comment: FK reference to [concepts](#concepts) table representing the type of
       collection this record represents
     :foreign_key: concepts
-    :null: false
 :contexts](#contexts)_[practitioners:
   :context_id:
     :type: :Bigint
@@ -221,7 +198,6 @@
   :role_type_concept_id:
     :type: String
     :comment: Roles [practitioners](#practitioners) can play in an encounter
-    :null: false
   :specialty_type_concept_id:
     :type: :Bigint
     :comment: FK reference to [concepts](#concepts) table representing the practitioner's
@@ -255,19 +231,16 @@
     :type: :Bigint
     :comment: FK reference to [facilities](#facilities) table
     :foreign_key: facilities
-    :null: false
   :care_site_type_concept_id:
     :type: :Bigint
     :comment: FK reference to [concepts](#concepts) table representing the care site
       type within the facility
     :foreign_key: concepts
-    :null: false
   :pos_concept_id:
     :type: :Bigint
     :comment: FK reference to [concepts](#concepts) table representing the place of
       service associated with this record
     :foreign_key: concepts
-    :null: false
   :file_type_concept_id:
     :type: :Bigint
     :comment: FK reference to [concepts](#concepts) table representing the type of
@@ -279,7 +252,6 @@
     :comment: FK reference to [concepts](#concepts) table representing the specialty
       type for the services/diagnoses associated with this record
     :foreign_key: concepts
-    :null: false
   :record_type_concept_id:
     :type: :Bigint
     :comment: FK reference to [concepts](#concepts) table representing the type of
@@ -324,18 +296,15 @@
   :quantity:
     :type: :Bigint
     :comment: Quantity, if available (e.g., procedures)
-    :null: false
   :seq_num:
     :type: Integer
     :comment: The sequence number for the variable assigned (e.g. dx3 gets sequence
       number 3)
-    :null: false
   :provenance_concept_id:
     :type: :Bigint
     :comment: 'Additional type information (ex: primary, admitting, problem list,
       etc)'
     :foreign_key: concepts
-    :null: false
   :clinical_code_source_value:
     :type: String
     :comment: Source code from raw data
@@ -349,12 +318,10 @@
     :type: :Bigint
     :comment: FK reference to [measurement_details](#measurement_details) table
     :foreign_key: measurement_details
-    :null: false
   :drug_exposure_detail_id:
     :type: :Bigint
     :comment: FK reference to [drug_exposure_details](#drug_exposure_details) table
     :foreign_key: drug_exposure_details
-    :null: false
 :measurement_details:
   :id:
     :type: :Bigint
@@ -370,51 +337,42 @@
     :type: Float
     :comment: The observation result stored as a number, applicable to observations
       where the result is expressed as a numeric value
-    :null: false
   :result_as_string:
     :type: String
     :comment: The observation result stored as a string, applicable to observations
       where the result is expressed as verbatim text
-    :null: false
   :result_as_concept_id:
     :type: :Bigint
     :comment: FK reference to [concepts](#concepts) table for the result associated
       with the detail_concept_id (e.g., positive/negative, present/absent, low/high,
       etc.)
     :foreign_key: concepts
-    :null: false
   :result_modifier_concept_id:
     :type: :Bigint
     :comment: FK reference to [concepts](#concepts) table for result modifier (=,
       <, >, etc.)
     :foreign_key: concepts
-    :null: false
   :unit_concept_id:
     :type: :Bigint
     :comment: FK reference to [concepts](#concepts) table for the measurement units
       (e.g., mmol/L, mg/dL, etc.)
     :foreign_key: concepts
-    :null: false
   :normal_range_low:
     :type: Float
     :comment: Lower bound of the normal reference range assigned by the laboratory
-    :null: false
   :normal_range_high:
     :type: Float
     :comment: Upper bound of the normal reference range assigned by the laboratory
-    :null: false
   :normal_range_low_modifier_concept_id:
     :type: :Bigint
     :comment: FK reference to [concepts](#concepts) table for result modifier (=,
       <, >, etc.)
     :foreign_key: concepts
-    :null: false
   :normal_range_high_modifier_concept_id:
     :type: :Bigint
     :comment: FK reference to [concepts](#concepts) table for result modifier (=,
       <, >, etc.)
     :foreign_key: concepts
-    :null: false
 :drug_exposure_details:
   :id:
     :type: :Bigint
@@ -430,51 +388,41 @@
     :type: Integer
     :comment: The number of refills after the initial prescription; the initial prescription
       is not counted (i.e., values start with 0)
-    :null: false
   :days_supply:
     :type: Integer
     :comment: The number of days of supply as recorded in the original prescription
       or dispensing record
-    :null: false
   :number_per_day:
     :type: Float
     :comment: The number of pills taken per day
-    :null: false
   :dose_form_concept_id:
     :type: :Bigint
     :comment: FK reference to [concepts](#concepts) table for the form of the drug
       (capsule, injection, etc.)
     :foreign_key: concepts
-    :null: false
   :dose_unit_concept_id:
     :type: :Bigint
     :comment: FK reference to [concepts](#concepts) table for the units in which the
       dose_value is expressed
     :foreign_key: concepts
-    :null: false
   :route_concept_id:
     :type: :Bigint
     :comment: FK reference to [concepts](#concepts) table for route in which drug
       is given
     :foreign_key: concepts
-    :null: false
   :dose_value:
     :type: Float
     :comment: Numeric value for the dose of the drug
-    :null: false
   :strength_source_value:
     :type: String
     :comment: Drug strength as reported in the raw data. This can include both dose
       value and units
-    :null: false
   :ingredient_source_value:
     :type: String
     :comment: Ingredient/Generic name of drug as reported in the raw data
-    :null: false
   :drug_name_source_value:
     :type: String
     :comment: Product/Brand name of drug as reported in the raw data
-    :null: false
 :costs:
   :id:
     :type: :Bigint
@@ -502,12 +450,10 @@
     :comment: The total amount charged by the provider of the good/service (e.g. hospital,
       physician pharmacy, dme provider) billed to a payer. This information is usually
       provided in claims data.
-    :null: false
   :total_cost:
     :type: Float
     :comment: Cost of service/device/drug incurred by provider/pharmacy. This field
       is more commonly derived from charge information.
-    :null: false
   :total_cost_type_concept_id:
     :type: :Bigint
     :comment: 'FK reference to [concepts](#concepts) table for the provenance or the
@@ -515,7 +461,6 @@
       data: Calculated from provider revenue, calculated from cost-to-charge ratio,
       reported from accounting database, etc.'
     :foreign_key: concepts
-    :null: false
   :total_paid:
     :type: Float
     :comment: 'The total amount paid from all payers for the expenses of the service/device/drug.
@@ -523,7 +468,6 @@
       + paid_by_primary. In claims data, this field is considered the calculated field
       the payer expects the provider to get reimbursed for the service/device/drug
       from the payer and from the patient, based on the payer''s contractual obligations.'
-    :null: false
   :paid_by_payer:
     :type: Float
     :comment: 'The amount paid by the Payer for the service/device/drug. In claims
@@ -536,7 +480,6 @@
       there is more than one Payer in the source data, several cost records indicate
       that fact. The Payer reporting this reimbursement should be indicated under
       the payer_plan_id field.'
-    :null: false
   :paid_by_patient:
     :type: Float
     :comment: 'The total amount paid by the patient as a share of the expenses. This
@@ -551,14 +494,12 @@
       payment should be noted under the total_paid field. The paid_by_patient field
       is only used for reporting a patient''s responsibility reported on an insurance
       claim.'
-    :null: false
   :paid_patient_copay:
     :type: Float
     :comment: The amount paid by the patient as a fixed contribution to the expenses.
       paid_patient_copay does contribute to the paid_by_patient variable. The paid_patient_copay
       field is only used for reporting a patient's copay amount reported on an insurance
       claim.
-    :null: false
   :paid_patient_coinsurance:
     :type: Float
     :comment: The amount paid by the patient as a joint assumption of risk. Typically,
@@ -566,14 +507,12 @@
       deductible is exceeded. paid_patient_coinsurance does contribute to the paid_by_patient
       variable. The paid_patient_coinsurance field is only used for reporting a patient's
       coinsurance amount reported on an insurance claim.
-    :null: false
   :paid_patient_deductible:
     :type: Float
     :comment: The amount paid by the patient that is counted toward the deductible
       defined by the Payer Plan. paid_patient_deductible does contribute to the paid_by_patient
       variable. The paid_patient_deductible field is only used for reporting a patient's
       deductible amount reported on an insurance claim.
-    :null: false
   :paid_by_primary:
     :type: Float
     :comment: The amount paid by a primary Payer through the coordination of benefits.
@@ -585,23 +524,19 @@
       an amount to the provider), then the primary insurance payment should have it's
       own cost record with a payer_plan_id set to the applicable payer, and the actual
       primary insurance payment should be noted under the paid_by_payer field.
-    :null: false
   :paid_ingredient_cost:
     :type: Float
     :comment: The amount paid by the Payer to a pharmacy for the drug, excluding the
       amount paid for dispensing the drug. paid_ingredient_cost contributes to the
       paid_by_payer field if this field is populated with a nonzero value.
-    :null: false
   :paid_dispensing_fee:
     :type: Float
     :comment: The amount paid by the Payer to a pharmacy for dispensing a drug, excluding
       the amount paid for the drug ingredient. paid_dispensing_fee contributes to
       the paid_by_payer field if this field is populated with a nonzero value.
-    :null: false
   :information_period_id:
     :type: Float
     :comment: FK reference to the [information_periods](#information_periods) table
-    :null: false
   :amount_allowed:
     :type: Float
     :comment: 'The contracted amount agreed between the payer and provider. This information
@@ -614,7 +549,6 @@
       deductible) will be equal $0 in the source data. This means the patient is responsible
       for the total_charged value. The amount_allowed field is payer specific and
       the payer should be indicated by the payer_plan_id field.'
-    :null: false
 :addresses:
   :id:
     :type: :Bigint
@@ -624,41 +558,32 @@
   :address_1:
     :type: String
     :comment: Typically used for street address
-    :null: false
   :address_2:
     :type: String
     :comment: Typically used for additional detail such as building, suite, floor,
       etc.
-    :null: false
   :city:
     :type: String
     :comment: The city field as it appears in the source data
-    :null: false
   :state:
     :type: String
     :comment: The state field as it appears in the source data
-    :null: false
   :zip:
     :type: String
     :comment: The zip or postal code
-    :null: false
   :county:
     :type: String
     :comment: The county, if available
-    :null: false
   :census_tract:
     :type: String
     :comment: The census tract if available
-    :null: false
   :hsa:
     :type: String
     :comment: The Health Service Area, if available (originally defined by the National
       Center for Health Statistics)
-    :null: false
   :country:
     :type: String
     :comment: The country if necessary
-    :null: false
 :deaths:
   :id:
     :type: :Bigint
@@ -679,18 +604,15 @@
     :comment: FK reference to [concepts](#concepts) table for cause of death (typically
       ICD-9 or ICD-10 code)
     :foreign_key: concepts
-    :null: false
   :cause_type_concept_id:
     :type: :Bigint
     :comment: FK reference to [concepts](#concepts) table for the type of cause of
       death (e.g. primary, secondary, etc. )
     :foreign_key: concepts
-    :null: false
   :practitioner_id:
     :type: :Bigint
     :comment: FK reference to [practitioners](#practitioners) table
     :foreign_key: practitioners
-    :null: false
 :information_periods:
   :id:
     :type: :Bigint
@@ -739,7 +661,6 @@
     :type: :Bigint
     :comment: Database specific code indicating source of admission (e.g., ER visit,
       transfer, etc.)
-    :null: false
   :discharge_location_concept_id:
     :type: :Bigint
     :comment: Database specific code indicating discharge location (e.g., death, home,
