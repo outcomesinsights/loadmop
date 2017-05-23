@@ -1,5 +1,6 @@
 require 'loadmop/version'
 require 'facets/kernel/constant'
+require 'sequelizer'
 
 module Loadmop
   LOADERS_DIR = "loadmop/loaders/"
@@ -13,7 +14,17 @@ module Loadmop
     [loader_key, constant(loader_class_name)]
   end]
 
-  def self.loader_klass(db)
-    LOADERS[db.database_type.to_sym] || LOADERS[:loader]
+  class << self
+    include Sequelizer
+
+    def loader_klass(db)
+      LOADERS[db.database_type.to_sym] || LOADERS[:loader]
+    end
+
+    def create_database(schema, database_name, files_dir, options = {})
+      _db = db(options.merge(database: database_name))
+      loader = loader_klass(_db).new(_db, files_dir, options.merge(data_model: schema))
+      loader.create_database
+    end
   end
 end

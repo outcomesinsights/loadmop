@@ -10,7 +10,7 @@ module Loadmop
       attr :db, :options, :data_filer, :data_model_name, :force, :tables, :data, :indexes
 
       def initialize(db, data_files_path, options = {})
-        @data_filer = Loadmop::DataFiler.data_filer(data_files_path, self).tap { |o| p o.files }
+        @data_filer = Loadmop::DataFiler.data_filer(data_files_path, self)
         @data_model_name = options.delete(:data_model) or raise "You need to specify a data model"
         p options
         @force = options.delete(:force)

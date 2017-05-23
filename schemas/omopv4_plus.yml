@@ -919,3 +919,30 @@
     :druera_perid:
       :columns:
       - person_id
+:drug_strength:
+  :drug_concept_id:
+    :type: Bignum
+    :foreign_key: concept
+  :ingredient_concept_id:
+    :type: Bignum
+    :foreign_key: concept
+  :amount_value:
+    :type: Float
+  :amount_unit:
+    :type: String
+  :concentration_value:
+    :type: Float
+  :concentration_enum_unit:
+    :type: String
+  :concentration_denom_unit:
+    :type: String
+  :valid_start_date:
+    :type: Date
+  :valid_end_date:
+    :type: Date
+  :invalid_reason:
+    :type: String
+  :indexes:
+    :drustr_druconid:
+      :columns:
+      - drug_concept_id

@@ -1,10 +1,8 @@
 require 'thor'
 require 'loadmop'
-require 'sequelizer'
 
 module Loadmop
   class CLI < Thor
-    include Sequelizer
 
     class_option :adapter,
       aliases: :a,
@@ -55,9 +53,7 @@ module Loadmop
 
     desc 'create {omopv4, omopv4_plus, vocab} database_name files_dir', 'Creates the tables specified in database_name and loads the files specified into them'
     def create(schema, database_name, files_dir)
-      _db = db(options.merge(database: database_name))
-      loader = Loadmop.loader_klass(_db).new(_db, files_dir, options.merge(data_model: schema))
-      loader.create_database
+      Loadmop.create_database(schema, database_name, files_dir, options)
     end
   end
 end

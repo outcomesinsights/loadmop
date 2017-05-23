@@ -42,7 +42,7 @@ module Loadmop
 
     class PathFiler < Filer
       def files_of_interest
-        dir = Pathname.new(data_files_dir)
+        dir = Pathname.new(source)
         loader.data_model.keys.map { |k| dir + "#{k}.csv"}.select(&:exist?)
       end
 
@@ -58,7 +58,7 @@ module Loadmop
       end
 
       def make_all_files
-        split_dir = data_files_dir + 'split'
+        split_dir = source + 'split'
         split_dir.mkdir unless split_dir.exist?
         files_of_interest.map do |file|
           table_name = file.basename('.*').to_s.downcase.to_sym
