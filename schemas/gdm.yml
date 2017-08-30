@@ -235,10 +235,10 @@
     :comment: FK reference to [concepts](#concepts) table representing the place of
       service associated with this record
     :foreign_key: concepts
-  :file_type_concept_id:
+  :source_type_concept_id:
     :type: :Bigint
-    :comment: FK reference to [concepts](#concepts) table representing the type of
-      file from which the record was pulled
+    :comment: FK reference to [concepts](#concepts) table representing the file name
+      (e.g MEDPAR) and concatenate the subset of the file used to result in MEDPAR_SNF
     :foreign_key: concepts
     :null: false
   :service_specialty_type_concept_id:
@@ -722,7 +722,6 @@
 :vocabularies:
   :id:
     :type: String
-    :primary_key: true
     :comment: Short name of the vocabulary which acts as a natural key for record
     :null: false
   :omopv4_vocabulary_id:
