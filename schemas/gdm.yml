@@ -722,6 +722,7 @@
 :vocabularies:
   :id:
     :type: String
+    :primary_key: true
     :comment: Short name of the vocabulary which acts as a natural key for record
     :null: false
   :omopv4_vocabulary_id:
