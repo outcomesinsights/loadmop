@@ -7,7 +7,7 @@ require 'benchmark'
 module Loadmop
   module Loaders
     class Loader
-      attr :db, :options, :data_filer, :data_model_name, :force, :tables, :data, :indexes
+      attr :db, :options, :data_filer, :data_model_name, :force, :tables, :data, :indexes, :fk_constraints
 
       def initialize(db, data_files_path, options = {})
         @data_filer = Loadmop::DataFiler.data_filer(data_files_path, self)
@@ -17,6 +17,7 @@ module Loadmop
         @tables = options.delete(:tables)
         @data = options.delete(:data)
         @indexes = options.delete(:indexes)
+        @fk_constraints = options.delete("foreign-keys".to_sym)
         @options = options
         @db = db
       end
@@ -26,6 +27,7 @@ module Loadmop
         create_tables if tables
         load_files if data
         create_indexes if indexes && supports_indexes?
+        create_foreign_key_constraints if fk_constraints && supports_fk_constraints?
       end
 
       def data_model
@@ -69,6 +71,7 @@ module Loadmop
       end
 
       def create_tables
+        s = self
         data_model.dup.each do |table_name, columns|
           db.send(create_method, send(table_name)) do
             columns.each do |column_name, column_options|
@@ -90,6 +93,17 @@ module Loadmop
             [table_name, table_indices]
           end.compact
         ]
+      end
+
+      def create_foreign_key_constraints
+        data_model.each do |table, columns|
+          columns.each do |column_name, column_options|
+            next unless fk = column_options[:foreign_key]
+            db.alter_table(table) do
+              add_foreign_key([column_name], fk, key: :id)
+            end
+          end
+        end
       end
 
       def create_indexes
@@ -161,6 +175,10 @@ module Loadmop
       end
 
       def supports_indexes?
+        true
+      end
+
+      def supports_fk_constraints?
         true
       end
 

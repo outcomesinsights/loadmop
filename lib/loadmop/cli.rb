@@ -50,6 +50,11 @@ module Loadmop
       type: :boolean,
       default: true,
       desc: "Create indexes"
+    class_option "foreign-keys".to_sym,
+      aliases: :k,
+      type: :boolean,
+      default: true,
+      desc: "Create foreign key constraints"
 
     desc 'create {omopv4, omopv4_plus, gdm, vocab} database_name files_dir', 'Creates the tables specified in database_name and loads the files specified into them'
     def create(schema, database_name, files_dir)
