@@ -315,6 +315,10 @@
     :type: :Bigint
     :comment: FK reference to [drug_exposure_details](#drug_exposure_details) table
     :foreign_key: drug_exposure_details
+  :indexes:
+    :clinical_code_concept_id_idx:
+      :columns:
+      - clinical_code_concept_id
 :measurement_details:
   :id:
     :type: :Bigint
@@ -719,6 +723,11 @@
     :type: String
     :comment: Text descriptor associated with the concept_code
     :null: false
+  :indexes:
+    :vocabulary_id_concept_code_idx:
+      :columns:
+      - vocabulary_id
+      - concept_code
 :vocabularies:
   :id:
     :type: String
