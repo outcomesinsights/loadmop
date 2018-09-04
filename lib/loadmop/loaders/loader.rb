@@ -99,8 +99,9 @@ module Loadmop
         data_model.each do |table, columns|
           columns.each do |column_name, column_options|
             next unless fk = column_options[:foreign_key]
+            key = get_key(fk)
             db.alter_table(table) do
-              add_foreign_key([column_name], fk, key: :id)
+              add_foreign_key([column_name], fk, key: key)
             end
           end
         end
@@ -158,6 +159,11 @@ module Loadmop
             end
           end
         end
+      end
+
+      def get_key(fk)
+        return :id if data_model_name.to_s == "gdm"
+        return [fk, :id].join("_").to_sym
       end
 
       def schemas
