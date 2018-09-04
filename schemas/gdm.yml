@@ -319,6 +319,9 @@
     :clinical_code_concept_id_idx:
       :columns:
       - clinical_code_concept_id
+    :context_id_idx:
+      :columns:
+      - context_id
 :measurement_details:
   :id:
     :type: :Bigint
