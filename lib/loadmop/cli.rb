@@ -60,6 +60,11 @@ module Loadmop
     def create(schema, database_name, files_dir)
       Loadmop.create_database(schema, database_name, files_dir, options)
     end
+
+    desc 'ancestorize database_name', 'Creates the ancestors table and a couple helpful views'
+    def ancestorize(database_name)
+      Loadmop.ancestorize(database_name)
+    end
   end
 end
 

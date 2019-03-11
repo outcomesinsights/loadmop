@@ -1,4 +1,5 @@
 require 'loadmop/version'
+require 'loadmop/ancestorizer'
 require 'facets/kernel/constant'
 require 'sequelizer'
 
@@ -25,6 +26,11 @@ module Loadmop
       _db = db(options.merge(database: database_name))
       loader = loader_klass(_db).new(_db, files_dir, options.merge(data_model: schema))
       loader.create_database
+    end
+
+    def ancestorize(database_name)
+      _db = db(database: database_name)
+      Ancestorizer.new(_db).ancestorize
     end
   end
 end
