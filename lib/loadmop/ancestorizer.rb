@@ -6,62 +6,6 @@ module Loadmop
       @db = db
     end
 
-=begin
-drop table if exists ancestors;
-create table ancestors as (
-with recursive annies(ancestor_id, descendant_id) as (
-  select ancestor_id, descendant_id from (
-    select concept_2_id as ancestor_id, concept_2_id as descendant_id
-    from mappings
-    union
-    select concept_1_id as ancestor_id, concept_1_id as descendant_id
-    from mappings
-  ) first_tab
-  union
-  select t1.ancestor_id, t2.concept_1_id as descendant_id
-  from annies as t1
-  join mappings as t2 on t1.ancestor_id = t2.concept_2_id
-)
-select *
-from annies
-order by ancestor_id, descendant_id
-);
-
-drop view if exists ancestors_view;
-create view ancestors_view as (
-  select
-  c1.id as ancestor_id,
-  c1.vocabulary_id as ancestor_vocabulary_id,
-  c1.concept_code as ancestor_concept_code,
-  c1.concept_text as ancestor_concept_text,
-  c2.id as descendant_id,
-  c2.vocabulary_id as descendant_vocabulary_id,
-  c2.concept_code as descendant_concept_code,
-  c2.concept_text as descendant_concept_text
-  from ancestors a
-  join concepts c1 on (c1.id = a.ancestor_id)
-  join concepts c2 on (c2.id = a.descendant_id)
-  order by c1.id, c2.id
-);
-
-drop view if exists mappings_view;
-create view mappings_view as (
-  select
-  c1.id as c1_id,
-  c1.vocabulary_id as c1_vocabulary_id,
-  c1.concept_code as c1_concept_code,
-  c1.concept_text as c1_concept_text,
-  m.relationship_id,
-  c2.id as c2_id,
-  c2.vocabulary_id as c2_vocabulary_id,
-  c2.concept_code as c2_concept_code,
-  c2.concept_text as c2_concept_text
-  from mappings m
-  join concepts c1 on (c1.id = m.concept_1_id)
-  join concepts c2 on (c2.id = m.concept_2_id)
-  order by c1.id, c2.id
-);
-=end
     def ancestorize
       make_ancestors
       make_ancestors_view

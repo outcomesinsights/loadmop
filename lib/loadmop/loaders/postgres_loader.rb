@@ -5,7 +5,7 @@ module Loadmop
     class PostgresLoader < Loader
       def create_schema
         schemas.each do |schema|
-          db.execute("CREATE SCHEMA IF NOT EXISTS #{schema}")
+          db.create_schema(schema, if_not_exists: true)
         end
         db.execute("SET search_path TO #{options[:search_path]}")
       end

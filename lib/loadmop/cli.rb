@@ -65,6 +65,16 @@ module Loadmop
     def ancestorize(database_name)
       Loadmop.ancestorize(database_name)
     end
+
+    desc 'quick_index', 'Creates indexes on any column ending in _id'
+    def quick_index
+      Loadmop.quick_index(options)
+    end
+
+    desc 'zap_test_schemas', 'Drops all schemas that contain "_test_" in the name.  Use with caution.'
+    def zap_test_schemas
+      Loadmop.zap_test_schemas(options)
+    end
   end
 end
 

@@ -1,5 +1,7 @@
 require 'loadmop/version'
 require 'loadmop/ancestorizer'
+require 'loadmop/quick_indexer'
+require 'loadmop/test_schema_zapper'
 require 'facets/kernel/constant'
 require 'sequelizer'
 
@@ -31,6 +33,14 @@ module Loadmop
     def ancestorize(database_name)
       _db = db(database: database_name)
       Ancestorizer.new(_db).ancestorize
+    end
+
+    def quick_index(options = {})
+      QuickIndexer.new(db, options = {}).quick_index
+    end
+
+    def zap_test_schemas(opts = {})
+      TestSchemaZapper.new(db, opts).zap
     end
   end
 end
