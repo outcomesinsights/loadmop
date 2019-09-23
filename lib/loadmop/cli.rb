@@ -71,6 +71,11 @@ module Loadmop
       Loadmop.quick_index(options)
     end
 
+    desc 'gdm_full_indexes', 'Creates indexes on lots of potentially searched columns'
+    def gdm_full_indexes
+      Loadmop.gdm_full_index(options)
+    end
+
     desc 'zap_test_schemas', 'Drops all schemas that contain "_test_" in the name.  Use with caution.'
     def zap_test_schemas
       Loadmop.zap_test_schemas(options)

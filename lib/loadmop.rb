@@ -1,5 +1,6 @@
 require 'loadmop/version'
 require 'loadmop/ancestorizer'
+require 'loadmop/gdm_full_indexer'
 require 'loadmop/quick_indexer'
 require 'loadmop/test_schema_zapper'
 require 'facets/kernel/constant'
@@ -36,7 +37,11 @@ module Loadmop
     end
 
     def quick_index(options = {})
-      QuickIndexer.new(db, options = {}).quick_index
+      QuickIndexer.new(db, options).quick_index
+    end
+
+    def gdm_full_index(options = {})
+      GdmFullIndexer.new(db, options).index_it
     end
 
     def zap_test_schemas(opts = {})
