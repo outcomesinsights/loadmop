@@ -72,10 +72,10 @@ module Loadmop
 
       def create_tables
         s = self
-        data_model.dup.each do |table_name, columns|
+        data_model.dup.each do |table_name, table_info|
           db.send(create_method, send(table_name)) do
+            columns = table_info[:columns]
             columns.each do |column_name, column_options|
-              next if column_name == :indexes
               type = column_options.delete(:type)
               raise "No type for column #{table_name}.#{column_name}" if type.nil?
               send(type, column_name, column_options)
@@ -87,8 +87,8 @@ module Loadmop
 
       def indices
         @indices ||= Hash[
-          data_model.map do |table_name, columns|
-            table_indices = columns[:indexes]
+          data_model.map do |table_name, table_info|
+            table_indices = table_info[:indexes]
             next unless table_indices
             [table_name, table_indices]
           end.compact
@@ -96,7 +96,8 @@ module Loadmop
       end
 
       def create_foreign_key_constraints
-        data_model.each do |table, columns|
+        data_model.each do |table, table_info|
+          columns = table_info[:columns]
           columns.each do |column_name, column_options|
             next unless fk = column_options[:foreign_key]
             key = get_key(fk)
