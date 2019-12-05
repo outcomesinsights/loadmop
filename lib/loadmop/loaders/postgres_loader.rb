@@ -14,16 +14,17 @@ module Loadmop
       def load_file_set(table_name, headers, files, delimiter = ",")
         db[table_name].truncate(cascade: true)
         files.each do |file|
-          puts "Loading #{file} into #{table_name}(#{headers.join(", ")})"
+          logger.info "Loading #{file} into #{table_name}(#{headers.join(", ")})"
           file = File.binread(file) unless file.is_a?(IO)
-          db.copy_into(
-            table_name, {
-              format:  :csv,
-              columns: headers,
-              delimiter: delimiter,
-              data: file,
-            }.merge(postgres_copy_into_options)
-          )
+
+          opts = {
+            columns: headers,
+            data: file
+          }
+          
+          opts = opts.merge(format: :csv) if delimiter == ","
+
+          db.copy_into(table_name, opts.merge(postgres_copy_into_options))
         end
       end
 
@@ -34,9 +35,9 @@ module Loadmop
       def post_create_tables
         return unless options[:citus]
         db.run(%Q|CREATE EXTENSION IF NOT EXISTS "citus"|)
-        puts db['SELECT master_get_active_worker_nodes()'].all
+        logger.info db['SELECT master_get_active_worker_nodes()'].all
         data_model.each do |table_name, columns|
-          puts table_name
+          logger.info table_name
           person_id = columns[:person_id]
           next unless person_id
           unless %i(person death).include?(table_name)
@@ -50,7 +51,7 @@ module Loadmop
               end
             end.apply(db, :up)
           end
-          puts db["SELECT create_distributed_table('#{table_name}', 'person_id')"].all
+          logger.info db["SELECT create_distributed_table('#{table_name}', 'person_id')"].all
         end
       end
     end

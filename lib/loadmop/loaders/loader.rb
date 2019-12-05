@@ -1,40 +1,54 @@
-require 'pathname'
-require 'csv'
-require 'sequelizer'
-require_relative '../data_filer'
-require 'benchmark'
+require "pathname"
+require "csv"
+require "sequelizer"
+require_relative "../data_filer"
+require "benchmark"
+require "pp"
 
 module Loadmop
   module Loaders
     class Loader
-      attr :db, :options, :data_filer, :data_model_name, :force, :tables, :data, :indexes, :fk_constraints
+      LEXICON_TABLES = %i[ancestors concepts mappings vocabularies]
+
+      attr :db, :options, :data_filer, :data_model_name, :force, :tables, :data, :indexes, :fk_constraints, :logger
 
       def initialize(db, data_files_path, options = {})
         @data_filer = Loadmop::DataFiler.data_filer(data_files_path, self)
         @data_model_name = options.delete(:data_model) or raise "You need to specify a data model"
-        p options
         @force = options.delete(:force)
         @tables = options.delete(:tables)
         @data = options.delete(:data)
         @indexes = options.delete(:indexes)
+        @logger = options.delete(:logger) || Logger.new(STDOUT)
         @fk_constraints = options.delete("foreign-keys".to_sym)
         @options = options
         @db = db
+        db.loggers = Array(Logger.new(STDOUT))
       end
 
       def create_database
         create_schema_if_necessary
         create_tables if tables
+        report_tables if tables
         load_files if data
         create_indexes if indexes && supports_indexes?
         create_foreign_key_constraints if fk_constraints && supports_fk_constraints?
       end
 
       def data_model
-        @data_model ||= Psych.load_file(File.dirname(__FILE__) + "/../../../schemas/#{data_model_name}.yml")
+        @data_model ||= Psych.load_file(File.dirname(__FILE__) + "/../../../schemas/#{data_model_name}/schema.yml")
       end
 
       private
+
+      def report_tables
+        logger.debug do
+          db.tables(qualify: true).map do |table_name|
+            logger.debug table_name
+            [table_name, db.schema(table_name)]
+          end.to_h.pretty_inspect
+        end
+      end
 
       def all_files
         data_filer.all_files
@@ -42,38 +56,39 @@ module Loadmop
 
       def load_file_set(table, columns, files, delimiter = ",")
         files.each do |file|
-          puts "Loading #{file} into #{table}"
-          CSV.open(file, "rb", {}) do |csv|
+          logger.info "Loading #{file} into #{table}"
+          CSV.open(file, "rb", { col_sep: delimiter }) do |csv|
             csv.each_slice(1000) do |rows|
               print '.'
-              p rows.first
-              p db.schema(table)
+              logger.debug rows.first
+              logger.debug db.schema(table)
               converted_rows = convert(table, columns, rows)
-              p converted_rows.first
+              logger.debug converted_rows.first
               db[table].import(columns, converted_rows)
             end
           end
-          puts
         end
       end
 
       def load_files
-        all_files.each do |table, columns, files|
+        all_files.each do |table, columns, files, delimiter|
           table = table_name(table)
           orig_count = db[table].count
-          puts "Loading #{table}..."
+          logger.info "Loading #{table.inspect}..."
           elapsed = Benchmark.realtime do
-            load_file_set(table, columns, files)
+            load_file_set(table, columns, files, delimiter)
           end
           count = db[table].count - orig_count
-          puts "Loaded #{count} records into #{table} in #{elapsed} seconds #{count/elapsed} rec/sec"
+          logger.info "Loaded #{count} records into #{table} in #{elapsed} seconds #{count/elapsed} rec/sec"
         end
       end
 
       def create_tables
         s = self
         data_model.dup.each do |table_name, table_info|
-          db.send(create_method, send(table_name)) do
+          logger.info "Creating table #{table_name}..."
+          db.drop_table(table_name, if_exists: true, cascade: true) if force
+          db.create_table(send(table_name)) do
             columns = table_info[:columns]
             columns.each do |column_name, column_options|
               type = column_options.delete(:type)
@@ -110,19 +125,31 @@ module Loadmop
 
       def create_indexes
         indices.each do |table_name, table_indices|
-          table_indices.each do |index_name, details|
-            puts "Creating index '#{index_name}' for table #{table_name}..."
-            columns = details.delete(:columns).map(&:to_sym)
-            elapsed = Benchmark.realtime do
-              begin
-                db.add_index(table_name, columns, { name: index_name }.merge(details))
-              rescue Sequel::DatabaseError, PG::DuplicateTable
-                puts $!.message
-              end
+          if table_indices.is_a?(Hash)
+            table_indices.each do |index_name, details|
+              logger.info "Creating index '#{index_name}' for table #{table_name}..."
+              columns = details.delete(:columns).map(&:to_sym)
+              create_index(table_name, columns, { name: index_name }.merge(details))
             end
-            puts "Took #{elapsed}"
+          else
+            table_indices.each do |columns|
+              details = columns.pop if columns.last.is_a?(Hash)
+              details ||= {}
+              create_index(table_name, columns, details)
+            end
           end
         end
+      end
+
+      def create_index(table_name, columns, details)
+        elapsed = Benchmark.realtime do
+          begin
+            db.add_index(table_name, columns, details)
+          rescue Sequel::DatabaseError, PG::DuplicateTable
+            logger.info $!.message
+          end
+        end
+        logger.info "Took #{elapsed}"
       end
 
       def method_missing(symbol, *args)
@@ -187,10 +214,6 @@ module Loadmop
 
       def supports_fk_constraints?
         true
-      end
-
-      def create_method
-        force ? :create_table! : :create_table?
       end
     end
   end

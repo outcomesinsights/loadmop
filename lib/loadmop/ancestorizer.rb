@@ -3,7 +3,10 @@ module Loadmop
     attr_reader :db
 
     def initialize(db)
-      @db = db
+      @db = db.tap do |d|
+        db.logger = Loadmop.logger
+        Loadmop.logger.debug(db.opts.pretty_inspect)
+      end
     end
 
     def ancestorize

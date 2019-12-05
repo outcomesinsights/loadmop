@@ -21,18 +21,26 @@ module Loadmop
   class << self
     include Sequelizer
 
+    def logger
+      @logger ||= Logger.new(STDOUT).tap { |l| l.level = Logger::DEBUG }
+    end
+
     def loader_klass(db)
       LOADERS[db.database_type.to_sym] || LOADERS[:loader]
     end
 
-    def create_database(schema, database_name, files_dir, options = {})
-      _db = db(options.merge(database: database_name))
-      loader = loader_klass(_db).new(_db, files_dir, options.merge(data_model: schema))
+    def create_complete_database(data_model, database_name, files_dir, db_options)
+      create_database(data_model, database_name, files_dir, db_options.merge(data: true, tables: true, indexes: true, "foreign-keys".to_sym => true))
+    end
+
+    def create_database(data_model, database_name, files_dir, options = {})
+      _db = db(options.merge(database: database_name, loggers: Array(logger)))
+      loader = loader_klass(_db).new(_db, files_dir, options.merge(data_model: data_model, logger: logger))
       loader.create_database
     end
 
-    def ancestorize(database_name)
-      _db = db(database: database_name)
+    def ancestorize(database_name, opts = {})
+      _db = db(opts.merge(database: database_name, loggers: Array(logger)))
       Ancestorizer.new(_db).ancestorize
     end
 

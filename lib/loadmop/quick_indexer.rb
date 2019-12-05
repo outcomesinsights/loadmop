@@ -6,7 +6,8 @@ module Loadmop
       @options = options
     end
 
-    def quick_index
+    def index_it
+      return
       db.tables.map do |table|
         db[table].columns.select { |col| col.to_s.end_with?("_id") }.each do |column|
           puts "Indexing #{table}.#{column}..."

@@ -8,8 +8,16 @@ module Loadmop
       case string
       when %r{s3}
         S3Filer.new(URI(string.chomp("/")), loader)
+      when nil
+        NullFiler.new
       else
         PathFiler.new(Pathname.new(string), loader)
+      end
+    end
+
+    class NullFiler
+      def all_files
+        []
       end
     end
 
@@ -36,24 +44,24 @@ module Loadmop
         header_line = get_header_line(file)
         delimiter = ","
         delimiter = "\t" if header_line =~ Regexp.new("\t")
-        return CSV.parse_line(header_line, col_sep: delimiter).tap{|o|p o}.map(&:to_sym), delimiter
+        return CSV.parse_line(header_line, col_sep: delimiter).tap{ |o| p o }.map(&:to_sym), delimiter
       end
     end
 
     class PathFiler < Filer
       def files_of_interest
-        loader.data_model.keys.map { |k| source + "#{k}.csv"}.select(&:exist?)
+        loader.data_model.keys.map { |k| %w(csv tsv).map { |ext| source + "#{k}.#{ext}" } }.flatten.select(&:exist?)
       end
 
       def get_header_line(file)
         if file.to_s =~ /split/
-          file = Pathname.new(file.dirname.to_s.sub('split/', '') + '.csv')
+          file = Pathname.new(file.dirname.to_s.sub('split/', '') + file.extname)
         end
         File.open(file, 'rb', &:readline).downcase.gsub(/\|$/, '')
       end
 
       def lines_per_split
-        10000
+        100000
       end
 
       def make_all_files

@@ -1,0 +1,30 @@
+version: "3"
+
+services:
+  pg:
+    build:
+      context: "."
+      dockerfile: Dockerfile.lexicon
+    environment:
+      - POSTGRES_DB=lexicon
+      - POSTGRES_USER=ryan
+      - POSTGRES_PASSWORD=r
+    image: postgres:9.6-alpine
+    ports:
+      - "8765:5432"
+  lexicon:
+    build:
+      context: "."
+      dockerfile: Dockerfile.lexicon
+    ports:
+      - "9876:5432"
+  loadmop:
+    build:
+      context: "."
+      dockerfile: Dockerfile
+    environment:
+      - DOCKER_HUB_PASSWORD
+      - DOCKER_HUB_USER
+      - DROPBOX_OAUTH_BEARER
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
