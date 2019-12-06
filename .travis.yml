@@ -9,4 +9,4 @@ services:
 install:
   - docker-compose up -d
 script:
-  - docker-compose run loadmop bundle exec rake loadmop:gdm:load_lexicon loadmop:gdm:upload
+  - docker-compose run loadmop bundle exec rake loadmop:gdm:load loadmop:gdm:upload

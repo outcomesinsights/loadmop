@@ -14,6 +14,12 @@ def check_env(*keys)
   raise("Missing ENV vars: #{keys.join(", ")}") unless keys.empty?
 end
 
+def download(url, dest_file)
+  ShellB.new.run! do
+    curl("-sSL", url) > dest_file
+  end
+end
+
 CURRENT_BRANCH = ENV["TRAVIS_BRANCH"] || "chisel"
 
 LEXICON_PG_URL = ENV["LEXICON_PG_URL"] || "postgres://ryan:r@lexicon/lexicon"
@@ -22,7 +28,7 @@ VOCAB_TABLES = %w(ancestors concepts mappings vocabularies)
 LEXICON_TAG = "outcomesinsights/lexicon:#{CURRENT_BRANCH}.latest"
 
 namespace :loadmop do
-  %w[bundle curl docker git mv pigz psql tar touch].each do |cmd|
+  %w[bundle curl docker git mv pigz psql tar touch unzip].each do |cmd|
     ShellB.def_system_command(cmd)
   end
 
@@ -32,25 +38,28 @@ namespace :loadmop do
   schemas_dir = Pathname.new("schemas")
   temp_dir = Pathname.new("/tmp")
   dropbox_deployment_dir = temp_dir + "dropbox_deployment"
-  vocabs_dir = temp_dir + "vocabs"
+  data_dir = temp_dir + "data"
   artifacts_dir = temp_dir + "artifacts"
   sql_schemas_dir = artifacts_dir + "sql"
 
   data_models = {
     gdm: {
-      vocabs_dir: vocabs_dir,
+      data_dir: data_dir,
       dir: schemas_dir + "gdm",
       schema_url: "http://gdm.schema.yml.jsaw.io",
-      vocabs_url: "http://gdm.lexicon.csv.jsaw.io"
+      vocabs_url: "http://gdm.lexicon.csv.jsaw.io",
+      synpuf250_url: "http://synpuf250.csv.zip.jsaw.io"
     }
   }
   dm = data_models[:gdm]
   dm[:schema_yml] = dm[:dir] + "schema.yml"
   dm[:known_tables] = dm[:dir] + "known_tables.txt"
-  dm[:vocabs_tbz] = dm[:vocabs_dir] + "vocabs.tbz"
-  dm[:vocab_files] = %w[mappings.tsv concepts.tsv vocabularies.tsv].map { |file| dm[:vocabs_dir] + file }
+  dm[:vocabs_tbz] = temp_dir + "vocabs.tbz"
+  dm[:synpuf250_zip] = temp_dir + "synpuf250.zip"
+  dm[:vocab_files] = %w[mappings.tsv concepts.tsv vocabularies.tsv].map { |file| dm[:data_dir] + file }
   dm[:sql_schemas_dir] = sql_schemas_dir + "gdm"
   dm[:schema_sql] = dm[:sql_schemas_dir] + "schema.sql"
+  dm[:schema_with_data_sql] = dm[:sql_schemas_dir] + "test_data_for_#{CURRENT_BRANCH}.sql.gz"
   dm[:lexicon_schema_sql] = dm[:sql_schemas_dir] + "lexicon_schema.sql"
   dm[:lexicon_with_data_sql] = dm[:sql_schemas_dir] + "universal_vocabs_#{CURRENT_BRANCH}.sql.gz"
   dm[:additional_table_info] = {
@@ -74,14 +83,21 @@ namespace :loadmop do
   data_models.each do |data_model_name, dm|
     namespace data_model_name do
       directory dm[:dir]
-      directory dm[:vocabs_dir]
+      directory dm[:data_dir] => dm[:synpuf250_zip] do |t, _|
+        ShellB.new.run! do
+          unzip t.source
+          mv("250_sample", t.name)
+        end
+      end
+
+      file dm[:synpuf250_zip] do |t, _|
+        download(dm[:synpuf250_url], t.name)
+      end
 
       file dm[:known_tables]
 
-      file dm[:vocabs_tbz] => dm[:vocabs_dir] do |t, _|
-        ShellB.new.run! do
-          curl("-sSL", dm[:vocabs_url]) > t.name
-        end
+      file dm[:vocabs_tbz] => dm[:data_dir] do |t, _|
+        download(dm[:vocabs_url], t.name)
       end
 
       dm[:vocab_files].each do |file|
@@ -99,9 +115,7 @@ namespace :loadmop do
       end
 
       task :download_schema => dm[:dir] do 
-        ShellB.new.run! do
-          curl("-sSL", dm[:schema_url]) > dm[:schema_yml].to_s
-        end
+        download(dm[:schemas_url], t.name)
       end
 
       task update: [ dm[:schema_yml], dm[:known_tables] ] do |t, _|
@@ -115,8 +129,13 @@ namespace :loadmop do
         dm[:schema_yml].write(schema.to_yaml)
       end
 
-      task :load_lexicon, [:url] => [*dm[:vocab_files], dm[:schema_yml]] do |t, args|
-        Loadmop.create_complete_database(data_model_name, :lexicon, dm[:vocabs_dir], url: get_pg_url(args), force: true)
+      task :load, [:url] => [*dm[:vocab_files], *dm[:data_files], dm[:schema_yml]] do |t, args|
+        # Remove the CSV files so we favor Lexicon's latest TSV files
+        %w[concepts.csv vocabularies.csv mappings.csv].each do |n|
+          p = dm[:data_dir] + n
+          p.unlink if p.exist?
+        end 
+        Loadmop.create_complete_database(data_model_name, :lexicon, dm[:data_dir], url: get_pg_url(args), force: true)
         Loadmop.ancestorize(:lexicon, url: get_pg_url(args))
       end
 
@@ -126,6 +145,12 @@ namespace :loadmop do
       file dm[:schema_sql], [:url] => [dm[:schema_sql].dirname] do |t, args|
         ShellB.new.run! do
           dump_it("--schema-only", get_pg_url(args)) > t.name
+        end
+      end
+
+      file dm[:schema_with_data_sql], [:url] => [dm[:schema_with_data_sql].dirname] do |t, args|
+        ShellB.new.run! do
+          dump_it(get_pg_url(args)) | pigz > t.name
         end
       end
 
@@ -146,7 +171,7 @@ namespace :loadmop do
         sleep 10
       end
 
-      task upload_artifacts: [dropbox_deployment_dir, dm[:schema_sql], dm[:lexicon_schema_sql], dm[:lexicon_with_data_sql]] do
+      task upload_artifacts: [dropbox_deployment_dir, dm[:schema_sql], dm[:schema_with_data_sql], dm[:lexicon_schema_sql], dm[:lexicon_with_data_sql]] do
         check_env("DROPBOX_OAUTH_BEARER")
         ShellB.new.run! do
           cd(dropbox_deployment_dir)
@@ -154,6 +179,7 @@ namespace :loadmop do
           bundle(*%w[exec], "--gemfile=#{(dropbox_deployment_dir + "Gemfile").to_s}", *%w[ruby -Ilib bin/dropbox-deployment --debug --upload-path /Publicized/schemas/gdm --artifact-path], dm[:schema_sql])
           bundle(*%w[exec], "--gemfile=#{(dropbox_deployment_dir + "Gemfile").to_s}", *%w[ruby -Ilib bin/dropbox-deployment --debug --upload-path /Publicized/schemas/gdm --artifact-path], dm[:lexicon_schema_sql])
           bundle(*%w[exec], "--gemfile=#{(dropbox_deployment_dir + "Gemfile").to_s}", *%w[ruby -Ilib bin/dropbox-deployment --debug --upload-path /Publicized/universal_vocabs --artifact-path], dm[:lexicon_with_data_sql])
+          bundle(*%w[exec], "--gemfile=#{(dropbox_deployment_dir + "Gemfile").to_s}", *%w[ruby -Ilib bin/dropbox-deployment --debug --upload-path /Publicized/universal_vocabs --artifact-path], dm[:schema_with_data_sql])
         end
       end
 
@@ -180,7 +206,7 @@ namespace :loadmop do
         end
       end
 
-      task upload: [:upload_lexicon_image, :upload_artifacts]
+      task upload: [:upload_artifacts, :upload_lexicon_image]
     end
   end
 end
