@@ -3,6 +3,7 @@ require "loadmop"
 require "pathname"
 require "psych"
 require "shellb"
+require "pry-byebug"
 require "tmpdir"
 
 def get_pg_url(args)
@@ -115,7 +116,7 @@ namespace :loadmop do
       end
 
       task :download_schema => dm[:dir] do 
-        download(dm[:schemas_url], t.name)
+        download(dm[:schema_url], dm[:schema_yml])
       end
 
       task update: [ dm[:schema_yml], dm[:known_tables] ] do |t, _|

@@ -773,7 +773,8 @@
   :category: :lexicon
   :indexes:
   - - :vocabulary_id
-    - :concept_code
+    - - :lower
+      - :concept_code
 :vocabularies:
   :columns:
     :id:

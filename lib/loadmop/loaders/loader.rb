@@ -133,6 +133,7 @@ module Loadmop
             end
           else
             table_indices.each do |columns|
+              p columns
               details = columns.pop if columns.last.is_a?(Hash)
               columns = columns.map do |column|
                 unless column.is_a?(Array)

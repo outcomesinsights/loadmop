@@ -3,5 +3,6 @@ source 'https://rubygems.org'
 gemspec
 gem "facets"
 gem "pg"
+gem "pry-byebug"
 gem "rake"
 gem "shellb"
