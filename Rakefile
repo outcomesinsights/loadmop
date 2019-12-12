@@ -69,7 +69,7 @@ namespace :loadmop do
     concepts: {
       category: :lexicon,
       indexes: [
-        [:vocabulary_id, :concept_code]
+        [:vocabulary_id, [:lower, :concept_code]]
       ]
     },
     ancestors: {
