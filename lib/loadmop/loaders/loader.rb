@@ -135,8 +135,11 @@ module Loadmop
             table_indices.each do |columns|
               details = columns.pop if columns.last.is_a?(Hash)
               columns = columns.map do |column|
-                next unless column.is_a?(Array)
-                Sequel.function(column.shift, *column)
+                unless column.is_a?(Array)
+                  column
+                else
+                  Sequel.function(column.shift, *column)
+                end
               end
               details ||= {}
               create_index(table_name, columns, details)
