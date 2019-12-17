@@ -47,7 +47,7 @@ namespace :loadmop do
     gdm: {
       data_dir: data_dir,
       dir: schemas_dir + "gdm",
-      schema_url: "http://gdm.schema.yml.jsaw.io",
+      schema_url: "http://schemas.gdm.jsaw.io",
       vocabs_url: "http://gdm.lexicon.csv.jsaw.io",
       synpuf250_url: "http://synpuf250.csv.zip.jsaw.io"
     }
@@ -87,7 +87,7 @@ namespace :loadmop do
       directory dm[:data_dir] => dm[:synpuf250_zip] do |t, _|
         ShellB.new.run! do
           unzip t.source
-          mv("250_sample", t.name)
+          mv("250_sample_lexicon_vocabs", t.name)
         end
       end
 
@@ -116,7 +116,9 @@ namespace :loadmop do
       end
 
       task :download_schema => dm[:dir] do 
-        download(dm[:schema_url], dm[:schema_yml])
+        sh = ShellB.new
+        sh.curl("-sSL", dm[:schema_url]) | sh.tar("jxv")
+        sh.run!
       end
 
       task update: [ dm[:schema_yml], dm[:known_tables] ] do |t, _|
