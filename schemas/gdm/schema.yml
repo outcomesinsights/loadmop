@@ -774,7 +774,9 @@
   :indexes:
   - - :vocabulary_id
     - - :lower
-      - :concept_code
+      - :concept_text
+  - - :vocabulary_id
+    - :concept_code
 :vocabularies:
   :columns:
     :id:
