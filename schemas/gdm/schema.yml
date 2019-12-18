@@ -85,6 +85,8 @@
       :comment: Vocabulary the patient detail comes from
       :foreign_key: vocabularies
       :null: false
+  :indexes:
+  - - :patient_id
 :practitioners:
   :columns:
     :id:
@@ -209,6 +211,8 @@
       :comment: FK reference to [concepts](#concepts) table representing the type
         of collection this record represents
       :foreign_key: concepts
+  :indexes:
+  - - :patient_id
 :contexts_practitioners:
   :columns:
     :context_id:
@@ -287,6 +291,9 @@
         of [contexts](#contexts) the record represents (line, claim, etc.)
       :foreign_key: concepts
       :null: false
+  :indexes:
+  - - :patient_id
+  - - :source_type_concept_id
 :clinical_codes:
   :columns:
     :id:
@@ -352,6 +359,11 @@
       :type: :Bigint
       :comment: FK reference to [drug_exposure_details](#drug_exposure_details) table
       :foreign_key: drug_exposure_details
+  :indexes:
+  - - :clinical_code_concept_id
+  - - :clinical_code_vocabulary_id
+  - - :context_id
+  - - :patient_id
 :measurement_details:
   :columns:
     :id:
@@ -577,6 +589,8 @@
         means the patient is responsible for the total_charged value. The amount_allowed
         field is payer specific and the payer should be indicated by the payer_plan_id
         field.'
+  :indexes:
+  - - :patient_id
 :costs:
   :columns:
     :id:
@@ -621,6 +635,8 @@
         ratio, calculated cost, reported cost)
       :foreign_key: concepts
       :null: false
+  :indexes:
+  - - :patient_id
 :addresses:
   :columns:
     :id:
@@ -687,6 +703,8 @@
       :type: :Bigint
       :comment: FK reference to [practitioners](#practitioners) table
       :foreign_key: practitioners
+  :indexes:
+  - - :patient_id
 :information_periods:
   :columns:
     :id:
@@ -713,6 +731,9 @@
         type (e.g., insurance coverage, hospital data, up-to-standard date)
       :foreign_key: concepts
       :null: false
+  :indexes:
+  - - :patient_id
+  - - :information_type_concept_id
 :admission_details:
   :columns:
     :id:

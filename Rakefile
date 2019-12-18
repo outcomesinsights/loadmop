@@ -79,7 +79,58 @@ namespace :loadmop do
     },
     mappings: {
       category: :lexicon
-    }
+    },
+    clinical_codes: {
+      indexes: [
+        [ :clinical_code_concept_id ],
+        [ :clinical_code_vocabulary_id ],
+        [ :context_id ],
+        [ :patient_id ],
+      ]
+    },
+    collections: {
+      indexes: [
+        [ :patient_id ],
+      ]
+    },
+    contexts: {
+      indexes: [
+        [ :patient_id ],
+        [ :source_type_concept_id ],
+      ]
+    },
+    costs: {
+      indexes: [
+        [ :patient_id ],
+      ]
+    },
+    deaths: {
+      indexes: [
+        [ :patient_id ],
+      ]
+    },
+    information_periods: {
+      indexes: [
+        [ :patient_id ],
+        [ :information_type_concept_id ],
+      ]
+    },
+    patient_details: {
+      indexes: [
+        [ :patient_id ],
+      ]
+    },
+    patient: {
+      indexes: [
+        [ :gender_concept_id ],
+        [ :race_concept_id, :ethnicity_concept_id ],
+      ]
+    },
+    payer_reimbursements: {
+      indexes: [
+        [ :patient_id ],
+      ]
+    },
   }
 
   data_models.each do |data_model_name, dm|
