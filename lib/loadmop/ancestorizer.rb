@@ -16,18 +16,25 @@ module Loadmop
     end
 
     def make_ancestors
-      first_ds = db[:mappings].select(Sequel[:concept_2_id].as(:ancestor_id), Sequel[:concept_2_id].as(:descendant_id))
-      first_ds = first_ds.union(db[:mappings].select(Sequel[:concept_1_id].as(:ancestor_id), Sequel[:concept_1_id].as(:descendant_id)))
+      first_ds = db[:mappings].select(Sequel[:concept_2_id].as(Sequel[:ancestor_id]), Sequel[:concept_2_id].as(Sequel[:descendant_id]))
+      first_ds = first_ds.union(db[:mappings].select(Sequel[:concept_1_id].as(Sequel[:ancestor_id]), Sequel[:concept_1_id].as(Sequel[:descendant_id])))
 
-      recursive_ds = db[:annies].from_self(alias: :a)
+      recursive_ds = db[Sequel[:annies].as(:a)]
         .join(:mappings, { Sequel[:m][:concept_2_id] => Sequel[:a][:ancestor_id] }, table_alias: :m)
-        .select(Sequel[:a][:ancestor_id], Sequel[:m][:concept_1_id].as(:descendant_id))
+        .select(Sequel[:a][:ancestor_id], Sequel[:m][:concept_1_id].as(Sequel[:descendant_id]))
 
       create_ds = db[:annies]
-        .with_recursive(:annies, first_ds, recursive_ds, args: [:ancestor_id, :descendant_id], union_all: false)
+        .with_recursive(:annies, first_ds, recursive_ds, union_all: false)
         .order(:ancestor_id, :descendant_id)
+        .select(:ancestor_id, :descendant_id)
 
-      db.drop_table(:ancestors, cascade: true, if_exists: true)
+      opts = {
+        if_exists: true
+      }
+
+      Loadmop.logger.debug create_ds.all
+      opts[:cascade] = true unless db.database_type == :sqlite
+      db.drop_table(:ancestors, opts)
       db.create_table!(:ancestors, as: create_ds)
       db.add_index(:ancestors, [:ancestor_id], ignore_errors: true)
     end

@@ -31,6 +31,7 @@ module Loadmop
         create_tables if tables
         report_tables if tables
         load_files if data
+        perform_load_post_processing if data
         create_indexes if indexes && supports_indexes?
         create_foreign_key_constraints if fk_constraints && supports_fk_constraints?
       end
@@ -40,6 +41,9 @@ module Loadmop
       end
 
       private
+
+      def perform_load_post_processing
+      end
 
       def report_tables
         logger.debug do
@@ -83,11 +87,15 @@ module Loadmop
         end
       end
 
+      def drop_table_opts
+        {cascade: true}
+      end
+
       def create_tables
         s = self
         data_model.dup.each do |table_name, table_info|
           logger.info "Creating table #{table_name}..."
-          db.drop_table(table_name, if_exists: true, cascade: true) if force
+          db.drop_table(table_name, drop_table_opts.merge(if_exists: true)) if force
           db.create_table(send(table_name)) do
             columns = table_info[:columns]
             columns.each do |column_name, column_options|
@@ -133,7 +141,8 @@ module Loadmop
             end
           else
             table_indices.each do |columns|
-              p columns
+              next unless index_allowed?(columns)
+              logger.debug columns.pretty_inspect
               details = columns.pop if columns.last.is_a?(Hash)
               columns = columns.map do |column|
                 unless column.is_a?(Array)
@@ -147,6 +156,10 @@ module Loadmop
             end
           end
         end
+      end
+
+      def index_allowed?(columns)
+        true
       end
 
       def create_index(table_name, columns, details)
