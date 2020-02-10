@@ -6,7 +6,7 @@ services:
       context: "."
       dockerfile: Dockerfile.lexicon
     environment:
-      - POSTGRES_DB=lexicon
+      - POSTGRES_DB=test_data_for_chisel
       - POSTGRES_USER=ryan
       - POSTGRES_PASSWORD=r
     image: postgres:9.6-alpine
@@ -18,7 +18,14 @@ services:
       dockerfile: Dockerfile.lexicon
     ports:
       - "9876:5432"
+  sqlite:
+    image: busybox
+    command: sleep infinity
   loadmop:
+    depends_on:
+      - pg
+      - lexicon
+      - sqlite
     build:
       context: "."
       dockerfile: Dockerfile

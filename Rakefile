@@ -7,7 +7,7 @@ require "pry-byebug"
 require "tmpdir"
 
 def get_pg_url(args)
-  args.url || ENV["PG_URL"] || "postgres://ryan:r@pg/lexicon"
+  args.url || ENV["PG_URL"] || "postgres://ryan:r@pg/test_data_for_chisel"
 end
 
 def check_env(*keys)
@@ -27,6 +27,8 @@ LEXICON_PG_URL = ENV["LEXICON_PG_URL"] || "postgres://ryan:r@lexicon/lexicon"
 
 VOCAB_TABLES = %w(ancestors concepts mappings vocabularies)
 LEXICON_TAG = "outcomesinsights/lexicon:#{CURRENT_BRANCH}.latest"
+POSTGRES_TEST_DATA_TAG = "outcomesinsights/misc:test_data.#{CURRENT_BRANCH}.postgres.latest"
+SQLITE_TEST_DATA_TAG = "outcomesinsights/misc:test_data.#{CURRENT_BRANCH}.sqlite.latest"
 
 namespace :loadmop do
   %w[bundle curl docker git mv pigz psql tar touch unzip].each do |cmd|
@@ -60,6 +62,8 @@ namespace :loadmop do
   dm[:vocab_files] = %w[mappings.tsv concepts.tsv vocabularies.tsv].map { |file| dm[:data_dir] + file }
   dm[:sql_schemas_dir] = sql_schemas_dir + "gdm"
   dm[:schema_sql] = dm[:sql_schemas_dir] + "schema.sql"
+  dm[:sqlite_data_file] = temp_dir + "sqlite_data" + "gdm_250.db"
+  dm[:compressed_sqlite_data_file] = temp_dir + "gdm_250.db.zst"
   dm[:schema_with_data_sql] = dm[:sql_schemas_dir] + "test_data_for_#{CURRENT_BRANCH}.sql.gz"
   dm[:lexicon_schema_sql] = dm[:sql_schemas_dir] + "lexicon_schema.sql"
   dm[:lexicon_with_data_sql] = dm[:sql_schemas_dir] + "universal_vocabs_#{CURRENT_BRANCH}.sql.gz"
@@ -184,14 +188,23 @@ namespace :loadmop do
         dm[:schema_yml].write(schema.to_yaml)
       end
 
-      task :load, [:url] => [*dm[:vocab_files], *dm[:data_files], dm[:schema_yml]] do |t, args|
+      task :pause do
+        puts Time.now
+        sleep 20
+        puts Time.now
+      end
+
+      task :load, [:url, :database_name] => [*dm[:vocab_files], *dm[:data_files], dm[:schema_yml], :pause] do |t, args|
         # Remove the CSV files so we favor Lexicon's latest TSV files
         %w[concepts.csv vocabularies.csv mappings.csv].each do |n|
           p = dm[:data_dir] + n
           p.unlink if p.exist?
         end 
-        Loadmop.create_complete_database(data_model_name, :lexicon, dm[:data_dir], url: get_pg_url(args), force: true)
-        Loadmop.ancestorize(:lexicon, url: get_pg_url(args))
+        
+        p args
+        exit 1 if args.empty?
+        Loadmop.create_complete_database(data_model_name, args.database_name || :test_data_for_chisel, dm[:data_dir], url: get_pg_url(args), force: true)
+        Loadmop.ancestorize(args.database_name || :test_data_for_chisel, url: get_pg_url(args))
       end
 
       directory dm[:schema_sql].dirname
@@ -226,7 +239,9 @@ namespace :loadmop do
         sleep 10
       end
 
-      task upload_artifacts: [dropbox_deployment_dir, dm[:schema_sql], dm[:schema_with_data_sql], dm[:lexicon_schema_sql], dm[:lexicon_with_data_sql]] do
+      task create_artifacts: [dropbox_deployment_dir, dm[:schema_sql], dm[:schema_with_data_sql], dm[:lexicon_schema_sql], dm[:lexicon_with_data_sql]]
+
+      task upload_artifacts: [:create_artifacts] do
         check_env("DROPBOX_OAUTH_BEARER")
         ShellB.new.run! do
           cd(dropbox_deployment_dir)
@@ -247,6 +262,32 @@ namespace :loadmop do
         end
       end
 
+      task create_postgres_test_data_image: dm[:schema_with_data_sql] do |t, args|
+        ShellB.new.run! do
+          pigz("--decompress", "--stdout", t.source) | psql(get_pg_url(args))
+          container_id = `docker ps | grep loadmop_pg | awk '{ print $1 }'`.chomp
+          dc("stop", "pg")
+          docker("commit", container_id, POSTGRES_TEST_DATA_TAG)
+        end
+      end
+
+      directory dm[:sqlite_data_file].dirname
+
+      file dm[:sqlite_data_file] => dm[:sqlite_data_file].dirname do |t, _|
+        load_task = Rake::Task["loadmop:#{data_model_name}:load"]
+        load_task.reenable
+        load_task.invoke("sqlite://#{t.name}", t.name)
+      end
+
+      task create_sqlite_test_data_image: dm[:sqlite_data_file] do |t, _|
+        ShellB.new.run! do
+          container_id = `docker ps | grep loadmop_sqlite | awk '{ print $1 }'`.chomp
+          docker("cp", t.source, "#{container_id}:./")
+          dc("stop", "sqlite")
+          docker("commit", container_id, SQLITE_TEST_DATA_TAG)
+        end
+      end
+
       directory dropbox_deployment_dir do |t, _|
         ShellB.new.run! do
           git(*%w[clone --branch cli https://github.com/outcomesinsights/dropbox-deployment.git], t.name)
@@ -261,7 +302,24 @@ namespace :loadmop do
         end
       end
 
-      task upload: [:upload_artifacts, :upload_lexicon_image]
+      task upload_sqlite_test_data_image: :create_sqlite_test_data_image do
+        check_env("DOCKER_HUB_USER", "DOCKER_HUB_PASSWORD")
+        ShellB.new.run! do
+          docker("login", "--username=#{ENV["DOCKER_HUB_USER"]}", "--password=#{ENV["DOCKER_HUB_PASSWORD"]}")
+          docker("push", SQLITE_TEST_DATA_TAG)
+        end
+      end
+
+      task upload_postgres_test_data_image: :create_postgres_test_data_image do
+        check_env("DOCKER_HUB_USER", "DOCKER_HUB_PASSWORD")
+        ShellB.new.run! do
+          docker("login", "--username=#{ENV["DOCKER_HUB_USER"]}", "--password=#{ENV["DOCKER_HUB_PASSWORD"]}")
+          docker("push", POSTGRES_TEST_DATA_TAG)
+        end
+      end
+
+      task create: [:create_artifacts, :create_lexicon_image, :create_postgres_test_data_image, :create_sqlite_test_data_image]
+      task upload: [:upload_artifacts, :upload_lexicon_image, :upload_postgres_test_data_image, :upload_sqlite_test_data_image]
     end
   end
 end

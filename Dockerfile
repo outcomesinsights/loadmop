@@ -8,10 +8,13 @@ docker-compose \
 git \
 gnupg2 \
 libpq-dev \
+libsqlite3-dev \
 pass \
 pigz \
 postgresql-client \
+sqlite3 \
 zip \
+zstd \
 && gem update --system && gem install bundler \
 && mkdir -p lib/loadmop
 

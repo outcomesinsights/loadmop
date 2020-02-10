@@ -34,13 +34,13 @@ module Loadmop
     end
 
     def create_database(data_model, database_name, files_dir, options = {})
-      _db = db(options.merge(database: database_name, loggers: Array(logger)))
+      _db = new_db(options.merge(database: database_name, loggers: Array(logger)))
       loader = loader_klass(_db).new(_db, files_dir, options.merge(data_model: data_model, logger: logger))
       loader.create_database
     end
 
     def ancestorize(database_name, opts = {})
-      _db = db(opts.merge(database: database_name, loggers: Array(logger)))
+      _db = new_db(opts.merge(database: database_name, loggers: Array(logger)))
       Ancestorizer.new(_db).ancestorize
     end
 
