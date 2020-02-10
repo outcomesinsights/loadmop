@@ -8,10 +8,7 @@ module Loadmop
         commands << %Q(.log stdout)
         commands << %Q(.mode csv)
         commands << ".separator #{delimiter.inspect}"
-        commands << "placeholder"
         files.each do |file|
-          puts "Loading #{file} into #{table_name}"
-          commands.pop
           commands << ".import #{file} #{table_name}"
         end
         run_sqlite_commands(commands)
