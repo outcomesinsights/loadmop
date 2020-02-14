@@ -257,7 +257,7 @@ namespace :loadmop do
         ShellB.new.run! do
           pigz("--decompress", "--stdout", t.source) | psql(LEXICON_PG_URL)
           container_id = `docker ps | grep loadmop_lexicon | awk '{ print $1 }'`.chomp
-          dc("stop", "lexicon")
+          docker("stop", container_id)
           docker("commit", container_id, LEXICON_TAG)
         end
       end
@@ -266,7 +266,7 @@ namespace :loadmop do
         ShellB.new.run! do
           pigz("--decompress", "--stdout", t.source) | psql(get_pg_url(args))
           container_id = `docker ps | grep loadmop_pg | awk '{ print $1 }'`.chomp
-          dc("stop", "pg")
+          docker("stop", container_id)
           docker("commit", container_id, POSTGRES_TEST_DATA_TAG)
         end
       end
@@ -283,7 +283,7 @@ namespace :loadmop do
         ShellB.new.run! do
           container_id = `docker ps | grep loadmop_sqlite | awk '{ print $1 }'`.chomp
           docker("cp", t.source, "#{container_id}:./")
-          dc("stop", "sqlite")
+          docker("stop", container_id)
           docker("commit", container_id, SQLITE_TEST_DATA_TAG)
         end
       end
