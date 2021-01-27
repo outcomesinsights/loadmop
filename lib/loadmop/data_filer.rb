@@ -58,6 +58,9 @@ module Loadmop
           file = Pathname.new(file.dirname.to_s.sub('split/', '') + file.extname)
         end
         File.open(file, 'rb', &:readline).downcase.gsub(/\|$/, '')
+      rescue
+        puts "Failed to get header for #{file}"
+        raise
       end
 
       def lines_per_split
