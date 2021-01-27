@@ -36,11 +36,11 @@ namespace :loadmop do
   end
 
   ShellB.alias_command("dc", "docker-compose")
+  ShellB.alias_command("dropbox_deployment", "dropbox-deployment")
   ShellB.alias_command("dump_it", "pg_dump", *%w[--clean --quote-all-identifiers --no-owner --no-privileges --if-exists])
 
   schemas_dir = Pathname.new("schemas")
   temp_dir = Pathname.new("/tmp")
-  dropbox_deployment_dir = temp_dir + "dropbox_deployment"
   data_dir = temp_dir + "data"
   artifacts_dir = temp_dir + "artifacts"
   sql_schemas_dir = artifacts_dir + "sql"
@@ -239,17 +239,15 @@ namespace :loadmop do
         sleep 10
       end
 
-      task create_artifacts: [dropbox_deployment_dir, dm[:schema_sql], dm[:schema_with_data_sql], dm[:lexicon_schema_sql], dm[:lexicon_with_data_sql]]
+      task create_artifacts: [dm[:schema_sql], dm[:schema_with_data_sql], dm[:lexicon_schema_sql], dm[:lexicon_with_data_sql]]
 
       task upload_artifacts: [:create_artifacts] do
         check_env("DROPBOX_OAUTH_BEARER")
         ShellB.new.run! do
-          cd(dropbox_deployment_dir)
-          bundle(*%w[install --gemfile], (dropbox_deployment_dir + "Gemfile").to_s)
-          bundle(*%w[exec], "--gemfile=#{(dropbox_deployment_dir + "Gemfile").to_s}", *%w[ruby -Ilib bin/dropbox-deployment --debug --upload-path /Publicized/schemas/gdm --artifact-path], dm[:schema_sql])
-          bundle(*%w[exec], "--gemfile=#{(dropbox_deployment_dir + "Gemfile").to_s}", *%w[ruby -Ilib bin/dropbox-deployment --debug --upload-path /Publicized/schemas/gdm --artifact-path], dm[:lexicon_schema_sql])
-          bundle(*%w[exec], "--gemfile=#{(dropbox_deployment_dir + "Gemfile").to_s}", *%w[ruby -Ilib bin/dropbox-deployment --debug --upload-path /Publicized/universal_vocabs --artifact-path], dm[:lexicon_with_data_sql])
-          bundle(*%w[exec], "--gemfile=#{(dropbox_deployment_dir + "Gemfile").to_s}", *%w[ruby -Ilib bin/dropbox-deployment --debug --upload-path /Publicized/universal_vocabs --artifact-path], dm[:schema_with_data_sql])
+          dropbox_deployment(*%w[--debug --upload-path /Publicized/schemas/gdm --artifact-path], dm[:schema_sql])
+          dropbox_deployment(*%w[--debug --upload-path /Publicized/schemas/gdm --artifact-path], dm[:lexicon_schema_sql])
+          dropbox_deployment(*%w[--debug --upload-path /Publicized/universal_vocabs --artifact-path], dm[:lexicon_with_data_sql])
+          dropbox_deployment(*%w[--debug --upload-path /Publicized/universal_vocabs --artifact-path], dm[:schema_with_data_sql])
         end
       end
 
@@ -285,12 +283,6 @@ namespace :loadmop do
           docker("cp", t.source, "#{container_id}:./")
           docker("stop", container_id)
           docker("commit", container_id, SQLITE_TEST_DATA_TAG)
-        end
-      end
-
-      directory dropbox_deployment_dir do |t, _|
-        ShellB.new.run! do
-          git(*%w[clone --branch cli https://github.com/outcomesinsights/dropbox-deployment.git], t.name)
         end
       end
 
