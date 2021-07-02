@@ -60,6 +60,11 @@ module Loadmop
       type: :boolean,
       default: true,
       desc: "Create foreign key constraints"
+    class_option "allow-nulls".to_sym,
+      aliases: :N,
+      type: :boolean,
+      default: false,
+      desc: "Create null constraings"
 
     desc 'create {omopv4, omopv4_plus, gdm, vocab} database_name files_dir', 'Creates the tables specified in database_name and loads the files specified into them'
     def create(schema, database_name, files_dir)

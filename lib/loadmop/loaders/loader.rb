@@ -22,6 +22,7 @@ module Loadmop
         @pk_constraints = options.delete("primary-keys".to_sym)
         @logger = options.delete(:logger) || Logger.new(STDOUT)
         @fk_constraints = options.delete("foreign-keys".to_sym)
+        @allow_nulls = options.delete("allow-nulls".to_sym)
         @options = options
         @db = db
         db.loggers = Array(Logger.new(STDOUT))
@@ -102,6 +103,7 @@ module Loadmop
             columns = table_info[:columns]
             columns.each do |column_name, column_options|
               type = column_options.delete(:type)
+              column_options[:null] = s.allow_nulls || column_options.fetch(:null, true)
               raise "No type for column #{table_name}.#{column_name}" if type.nil?
               send(type, column_name, column_options)
             end
