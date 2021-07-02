@@ -797,6 +797,9 @@
     - - :lower
       - :concept_text
   - - :vocabulary_id
+    - - :lower
+      - :concept_code
+  - - :vocabulary_id
     - :concept_code
 :vocabularies:
   :columns:
