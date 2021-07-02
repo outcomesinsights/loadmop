@@ -64,7 +64,7 @@ module Loadmop
       end
 
       def lines_per_split
-        100000
+        1000
       end
 
       def make_all_files

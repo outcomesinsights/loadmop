@@ -4,6 +4,7 @@ require "sequelizer"
 require_relative "../data_filer"
 require "benchmark"
 require "pp"
+require "pry-byebug"
 
 module Loadmop
   module Loaders
@@ -143,9 +144,11 @@ module Loadmop
 
       def create_foreign_key_constraints
         data_model.each do |table, table_info|
+          next unless db.table_exists?(table)
           columns = table_info[:columns]
           columns.each do |column_name, column_options|
             next unless fk = column_options[:foreign_key]
+            next unless db.table_exists?(fk.to_sym)
             key = get_key(fk)
             db.alter_table(table) do
               add_foreign_key([column_name], fk, key: key)
