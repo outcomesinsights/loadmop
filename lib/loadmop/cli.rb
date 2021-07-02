@@ -73,7 +73,7 @@ module Loadmop
 
     desc 'ancestorize database_name', 'Creates the ancestors table and a couple helpful views'
     def ancestorize(database_name)
-      Loadmop.ancestorize(database_name)
+      Loadmop.ancestorize(database_name, options)
     end
 
     desc 'quick_index', 'Creates indexes on any column ending in _id'
