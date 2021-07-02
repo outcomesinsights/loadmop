@@ -50,6 +50,11 @@ module Loadmop
       type: :boolean,
       default: true,
       desc: "Create indexes"
+    class_option "primary-keys".to_sym,
+      aliases: :I,
+      type: :boolean,
+      default: true,
+      desc: "Create primary key constraints"
     class_option "foreign-keys".to_sym,
       aliases: :k,
       type: :boolean,

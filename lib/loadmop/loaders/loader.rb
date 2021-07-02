@@ -10,7 +10,7 @@ module Loadmop
     class Loader
       LEXICON_TABLES = %i[ancestors concepts mappings vocabularies]
 
-      attr :db, :options, :data_filer, :data_model_name, :force, :tables, :data, :indexes, :fk_constraints, :logger
+      attr :db, :options, :data_filer, :data_model_name, :force, :tables, :data, :indexes, :pk_constraints, :fk_constraints, :logger, :allow_nulls
 
       def initialize(db, data_files_path, options = {})
         @data_filer = Loadmop::DataFiler.data_filer(data_files_path, self)
@@ -19,6 +19,7 @@ module Loadmop
         @tables = options.delete(:tables)
         @data = options.delete(:data)
         @indexes = options.delete(:indexes)
+        @pk_constraints = options.delete("primary-keys".to_sym)
         @logger = options.delete(:logger) || Logger.new(STDOUT)
         @fk_constraints = options.delete("foreign-keys".to_sym)
         @options = options
@@ -33,6 +34,7 @@ module Loadmop
         load_files if data
         perform_load_post_processing if data
         create_indexes if indexes && supports_indexes?
+        create_primary_key_constraints if pk_constraints && supports_pk_constraints?
         create_foreign_key_constraints if fk_constraints && supports_fk_constraints?
       end
 
@@ -116,6 +118,25 @@ module Loadmop
             [table_name, table_indices]
           end.compact
         ]
+      end
+
+      def create_primary_key_constraints
+        data_model.each do |table, table_info|
+          next unless db.table_exists?(table)
+          columns = table_info[:columns]
+          columns.each do |column_name, column_options|
+            next unless pk = column_options[:primary_key]
+            if pk_column = db.primary_key(table)
+              puts "Can't set #{column_name} as PK since #{table}.#{pk_column} is already PK"
+              next
+            end
+
+            db.alter_table(table) do
+              add_primary_key([column_name])
+            end
+            create_index(table, [column_name], unique: true)
+          end
+        end
       end
 
       def create_foreign_key_constraints
@@ -230,6 +251,10 @@ module Loadmop
       end
 
       def supports_indexes?
+        true
+      end
+
+      def supports_pk_constraints?
         true
       end
 
