@@ -7,6 +7,7 @@ services:
   - docker
 
 install:
+  - echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USER" --password-stdin
   - docker-compose up -d
 script:
   - docker-compose run loadmop bundle exec rake loadmop:gdm:load loadmop:gdm:upload
