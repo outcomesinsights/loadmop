@@ -67,6 +67,7 @@ module Loadmop
       desc: "Create null constraings"
 
     desc 'create {omopv4, omopv4_plus, gdm, vocab} database_name files_dir', 'Creates the tables specified in database_name and loads the files specified into them'
+    option :shards, type: :string, desc: "Comma delimited list of shard numbers, (e.g. 4,5,6) to load simultaneously"
     def create(schema, database_name, files_dir)
       Loadmop.create_database(schema, database_name, files_dir, options)
     end

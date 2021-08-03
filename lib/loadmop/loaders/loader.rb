@@ -9,12 +9,11 @@ require "pry-byebug"
 module Loadmop
   module Loaders
     class Loader
-      LEXICON_TABLES = %i[ancestors concepts mappings vocabularies]
 
       attr :db, :options, :data_filer, :data_model_name, :force, :tables, :data, :indexes, :pk_constraints, :fk_constraints, :logger, :allow_nulls
 
       def initialize(db, data_files_path, options = {})
-        @data_filer = Loadmop::DataFiler.data_filer(data_files_path, self)
+        @data_filer = Loadmop::DataFiler.data_filer(data_files_path, self, options)
         @data_model_name = options.delete(:data_model) or raise "You need to specify a data model"
         @force = options.delete(:force)
         @tables = options.delete(:tables)

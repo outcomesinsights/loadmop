@@ -1,17 +1,18 @@
 require 'uri'
 require 'pathname'
 require 'open3'
+require "find"
 
 module Loadmop
   module DataFiler
-    def self.data_filer(string, loader)
+    def self.data_filer(string, loader, options = {})
       case string
       when %r{s3}
-        S3Filer.new(URI(string.chomp("/")), loader)
+        S3Filer.new(URI(string.chomp("/")), loader, options)
       when nil
         NullFiler.new
       else
-        PathFiler.new(Pathname.new(string), loader)
+        PathFiler.new(Pathname.new(string), loader, options)
       end
     end
 
@@ -22,10 +23,11 @@ module Loadmop
     end
 
     class Filer
-      attr :source, :loader
-      def initialize(source, loader)
+      attr :source, :loader, :options
+      def initialize(source, loader, options = {})
         @source = source
         @loader = loader
+        @options = options
       end
 
       def all_files
@@ -49,8 +51,39 @@ module Loadmop
     end
 
     class PathFiler < Filer
+      LEXICON_TABLES = %i[ancestors concepts mappings vocabularies]
+      EXTENSIONS = %w(csv tsv)
+
       def files_of_interest
-        loader.data_model.keys.map { |k| %w(csv tsv).map { |ext| source + "#{k}.#{ext}" } }.flatten.select(&:exist?)
+        lexicon_files.merge(data_files)
+      end
+
+      def lexicon_files
+        known_files = loader.data_model.keys
+          .select { |k| LEXICON_TABLES.include?(k) }
+          .map { |k| EXTENSIONS.map { |ext| "#{k}.#{ext}" } }.flatten
+
+        files = Find.find(source)
+          .select { |f| known_files.include?(File.basename(f)) }
+          .map { |f| Pathname.new(f) }
+          .group_by { |f| f.basename }
+      end
+
+      def data_files
+        known_files = loader.data_model.keys
+          .reject { |k| LEXICON_TABLES.include?(k) }
+          .map { |k| EXTENSIONS.map { |ext| "#{k}.#{ext}" } }.flatten
+
+        files = search_paths.flat_map do |search_path|
+          Find.find(search_path)
+            .select { |f| known_files.include?(File.basename(f)) }
+            .map { |f| Pathname.new(f) }
+        end.group_by { |f| f.basename }
+      end
+
+      def search_paths
+        return [source] unless options[:shards]
+        options[:shards].split(",").map { |shard| Pathname.new(source) + shard }
       end
 
       def get_header_line(file)
@@ -70,18 +103,19 @@ module Loadmop
       def make_all_files
         split_dir = source + 'split'
         split_dir.mkdir unless split_dir.exist?
-        files_of_interest.map do |file|
+        files_of_interest.map do |basename, files|
+          file = files.first
           table_name = file.basename('.*').to_s.downcase.to_sym
           headers, delimiter = headers_for(file)
           dir = split_dir + table_name.to_s
           unless dir.exist?
             dir.mkdir
             Dir.chdir(dir) do
-              puts "Splitting #{file}"
+              puts "Splitting #{files}"
               steps = []
-              steps << "tail -n +2 #{file.expand_path}"
+              steps << "tail --quiet --lines=+2 #{files.map(&:expand_path).join(" ")}"
               steps += additional_cleaning_steps
-              steps << "split -a 5 -l #{lines_per_split}"
+              steps << "split --suffix-length=6 --lines=#{lines_per_split}"
               command = steps.compact.join(" | ")
               puts command
               system(command)
