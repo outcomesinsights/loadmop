@@ -40,7 +40,7 @@ module Loadmop
       end
 
       def data_model
-        @data_model ||= Psych.load_file(File.dirname(__FILE__) + "/../../../schemas/#{data_model_name}/schema.yml")
+        Psych.load_file(File.dirname(__FILE__) + "/../../../schemas/#{data_model_name}/schema.yml")
       end
 
       private
