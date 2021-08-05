@@ -225,6 +225,11 @@
       :comment: FK reference to [practitioners](#practitioners) table
       :foreign_key: practitioners
       :null: false
+    :patient_id:
+      :type: :Bigint
+      :comment: FK reference to [patients](#patients) table
+      :foreign_key: patients
+      :null: false
     :role_type_concept_id:
       :type: :Bigint
       :comment: FK reference to the [concepts](#concepts) table representing roles

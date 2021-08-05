@@ -10,10 +10,11 @@ module Loadmop
   module Loaders
     class Loader
 
-      attr :db, :options, :data_filer, :data_model_name, :force, :tables, :data, :indexes, :pk_constraints, :fk_constraints, :logger, :allow_nulls
+      attr :db, :options, :data_filer, :data_model_name, :force, :tables, :data, :indexes, :pk_constraints, :fk_constraints, :logger, :allow_nulls, :partitioned, :data_files_path
 
       def initialize(db, data_files_path, options = {})
         @data_filer = Loadmop::DataFiler.data_filer(data_files_path, self, options)
+        @data_files_path = Pathname.new(data_files_path)
         @data_model_name = options.delete(:data_model) or raise "You need to specify a data model"
         @force = options.delete(:force)
         @tables = options.delete(:tables)
@@ -23,6 +24,7 @@ module Loadmop
         @logger = options.delete(:logger) || Logger.new(STDOUT)
         @fk_constraints = options.delete("foreign-keys".to_sym)
         @allow_nulls = options.delete("allow-nulls".to_sym)
+        @partitioned = options.delete(:partitioned)
         @options = options
         @db = db
         db.loggers = Array(Logger.new(STDOUT))
@@ -99,17 +101,32 @@ module Loadmop
         data_model.dup.each do |table_name, table_info|
           logger.info "Creating table #{table_name}..."
           db.drop_table(table_name, drop_table_opts.merge(if_exists: true)) if force
-          db.create_table(send(table_name)) do
+          is_partitioned = check_if_partitioned(table_name)
+          db.create_table(send(table_name), create_table_options(table_name)) do
             columns = table_info[:columns]
             columns.each do |column_name, column_options|
+              primary = column_options.delete(:primary_key) if is_partitioned
               type = column_options.delete(:type)
               column_options[:null] = s.allow_nulls || column_options.fetch(:null, true)
               raise "No type for column #{table_name}.#{column_name}" if type.nil?
               send(type, column_name, column_options)
             end
           end
+          post_create_table(table_name) if respond_to?(:post_create_table)
         end
         post_create_tables if respond_to?(:post_create_tables)
+      end
+
+      def create_table_options(table_name)
+        {}
+      end
+
+      def check_if_partitioned(table_name)
+        partitioned && is_table_partitioned?(table_name)
+      end
+
+      def is_table_partitioned?(table_name)
+        return false
       end
 
       def indices
@@ -122,63 +139,107 @@ module Loadmop
         ]
       end
 
+      def primary_key_for(table, column_name)
+        return [column_name]
+      end
+
       def create_primary_key_constraints
         data_model.each do |table, table_info|
-          next unless db.table_exists?(table)
-          columns = table_info[:columns]
-          columns.each do |column_name, column_options|
-            next unless pk = column_options[:primary_key]
-            if pk_column = db.primary_key(table)
-              puts "Can't set #{column_name} as PK since #{table}.#{pk_column} is already PK"
-              next
-            end
-
-            db.alter_table(table) do
-              add_primary_key([column_name])
-            end
-            create_index(table, [column_name], unique: true)
+          create_pk(table, table_info)
+          sub_partition_tables(table).each do |shard_table|
+            create_pk(shard_table, table_info)
           end
+        end
+      end
+
+      def sub_partition_tables(table)
+        []
+      end
+
+      def create_pk(table, table_info)
+        return unless db.table_exists?(table)
+        columns = table_info[:columns]
+        columns.each do |column_name, column_options|
+          next unless pk = column_options[:primary_key]
+          if pk_column = db.primary_key(table)
+            logger.info("Can't set #{column_name} as PK since #{table}.#{pk_column} is already PK")
+            next
+          end
+
+          primary_key = primary_key_for(table, column_name)
+          logger.debug("Assiging primary key for #{table}(#{primary_key.inspect})")
+          db.alter_table(table) do
+            add_primary_key(primary_key)
+          end
+          create_index(table, primary_key, unique: true)
         end
       end
 
       def create_foreign_key_constraints
         data_model.each do |table, table_info|
-          next unless db.table_exists?(table)
-          columns = table_info[:columns]
-          columns.each do |column_name, column_options|
-            next unless fk = column_options[:foreign_key]
-            next unless db.table_exists?(fk.to_sym)
-            key = get_key(fk)
-            db.alter_table(table) do
-              add_foreign_key([column_name], fk, key: key)
-            end
+          create_fk(table, table_info)
+          sub_partition_tables(table).each do |shard_table|
+            create_fk(shard_table, table_info)
           end
         end
       end
 
+      def create_fk(table, table_info)
+        return unless db.table_exists?(table)
+        columns = table_info[:columns]
+        columns.each do |column_name, column_options|
+          next unless fk = column_options[:foreign_key]
+          next unless db.table_exists?(fk.to_sym)
+          fk_table = fk_table_for(table, fk)
+          key = fk_columns_for(fk_table, get_key(fk))
+          fk_columns = fk_columns_for(fk_table, column_name)
+          db.alter_table(fk_table) do
+            add_index(key, unique: true, if_not_exists: true)
+          end
+          db.alter_table(table) do
+            add_foreign_key(fk_columns, fk_table, key: key)
+          end
+        end
+      end
+
+      def fk_table_for(table, fk)
+        return fk 
+      end
+
+      def fk_columns_for(foreign_table, column_name)
+        return [column_name]
+      end
+
       def create_indexes
         indices.each do |table_name, table_indices|
-          if table_indices.is_a?(Hash)
-            table_indices.each do |index_name, details|
-              logger.info "Creating index '#{index_name}' for table #{table_name}..."
-              columns = details.delete(:columns).map(&:to_sym)
-              create_index(table_name, columns, { name: index_name }.merge(details))
-            end
-          else
-            table_indices.each do |columns|
-              next unless index_allowed?(columns)
-              logger.debug columns.pretty_inspect
-              details = columns.pop if columns.last.is_a?(Hash)
-              columns = columns.map do |column|
-                unless column.is_a?(Array)
-                  column
-                else
-                  Sequel.function(column.shift, *column)
-                end
+          create_idx(table_name, table_indices)
+          sub_partition_tables(table_name).each do |shard_table|
+            create_idx(shard_table, table_indices)
+          end
+        end
+      end
+
+      def create_idx(table_name, table_indices)
+        if table_indices.is_a?(Hash)
+          table_indices.each do |index_name, details|
+            logger.info "Creating index '#{index_name}' for table #{table_name}..."
+            columns = details.delete(:columns).map(&:to_sym)
+            create_index(table_name, columns, { name: index_name }.merge(details))
+          end
+        else
+          table_indices.each do |columns|
+            next unless index_allowed?(columns)
+            #logger.debug columns.pretty_inspect
+            details = columns.pop if columns.last.is_a?(Hash)
+            columns = columns.map do |column|
+              unless column.is_a?(Array)
+                column
+              else
+                Sequel.function(column.shift, *column)
               end
-              details ||= {}
-              create_index(table_name, columns, details)
             end
+            details ||= {}
+            create_index(table_name, columns, details)
           end
         end
       end
@@ -268,3 +329,4 @@ module Loadmop
     end
   end
 end
+
