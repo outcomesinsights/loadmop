@@ -21,7 +21,7 @@ def download(url, dest_file)
   end
 end
 
-CURRENT_BRANCH = ENV["TRAVIS_BRANCH"] || "chisel"
+CURRENT_BRANCH = ENV["GITHUB_REF_NAME"] || ENV["TRAVIS_BRANCH"] || "chisel"
 
 LEXICON_PG_URL = ENV["LEXICON_PG_URL"] || "postgres://ryan:r@lexicon/lexicon"
 
