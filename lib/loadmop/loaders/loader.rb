@@ -171,7 +171,7 @@ module Loadmop
           db.alter_table(table) do
             add_primary_key(primary_key)
           end
-          create_index(table, primary_key, unique: true)
+          create_index(table, primary_key, unique: true, if_not_exists: true)
         end
       end
 
