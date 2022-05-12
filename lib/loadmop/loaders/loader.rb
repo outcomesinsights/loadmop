@@ -252,7 +252,7 @@ module Loadmop
         elapsed = Benchmark.realtime do
           begin
             db.add_index(table_name, columns, details)
-          rescue Sequel::DatabaseError, PG::DuplicateTable
+          rescue Sequel::DatabaseError, PG::DuplicateTable, SQLite3::SQLException
             logger.info $!.message
           end
         end
