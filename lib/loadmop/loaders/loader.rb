@@ -193,13 +193,13 @@ module Loadmop
           fk_table = fk_table_for(table, fk)
           key = fk_columns_for(fk_table, get_key(fk))
           fk_columns = fk_columns_for(fk_table, column_name)
-          db.alter_table(fk_table) do
-            begin
-              add_index(key, unique: true, if_not_exists: true)
-            rescue Sequel::DatabaseError, PG::DuplicateTable, SQLite3::SQLException
-              logger.info $!.message
-            end
-          end
+          #db.alter_table(fk_table) do
+          #  begin
+          #    add_index(key, unique: true, if_not_exists: true)
+          #  rescue Sequel::DatabaseError, PG::DuplicateTable, SQLite3::SQLException
+          #    logger.info $!.message
+          #  end
+          #end
           db.alter_table(table) do
             add_foreign_key(fk_columns, fk_table, key: key)
           end
