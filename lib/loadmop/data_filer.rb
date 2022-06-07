@@ -97,7 +97,7 @@ module Loadmop
       end
 
       def lines_per_split
-        1000
+        options["lines-per-split".to_sym] || 100000
       end
 
       def make_all_files
