@@ -45,6 +45,15 @@ module Loadmop
         Psych.load_file(File.dirname(__FILE__) + "/../../../schemas/#{data_model_name}/schema.yml")
       end
 
+      def provenance_columns
+        {
+          oi_id: column_opts(:bigint),
+          oi_original_file: column_opts(:text),
+          source_field_generator: column_opts(:text),
+          source_table: column_opts(:text)
+        }
+      end
+
       private
 
       def perform_load_post_processing
@@ -100,15 +109,6 @@ module Loadmop
         {
           type: type,
           null: true
-        }
-      end
-
-      def provenance_columns
-        {
-          oi_id: column_opts(:bigint),
-          oi_original_file: column_opts(:text),
-          source_field_generator: column_opts(:text),
-          source_table: column_opts(:text)
         }
       end
 
