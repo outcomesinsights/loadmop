@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# Example call:
+# time ./load_from_etl.sh _mnt_samba_data_by_vendor_seer_2022_q1_carved_full_recs_subsets_subset_headneck_cancer_32x seer_2022q1_headneck_full_20220511 postgres://ryan:r@titan.jsaw.io/all_gdm_dbs
 data_name=$1
 db_name=$2
 shards=${4}
