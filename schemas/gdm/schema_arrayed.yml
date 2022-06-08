@@ -842,10 +842,10 @@
     :type: :Bigint
     :comment: Number of unique patients table
   - :name: :earliest_date
-    :type: :Bigint
+    :type: Date
     :comment: Earliest date found in table
   - :name: :latest_date
-    :type: :Bigint
+    :type: Date
     :comment: Latest date found in table
 - :name: :etl_vocabulary_ids
   :columns:

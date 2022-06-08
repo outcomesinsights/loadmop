@@ -170,7 +170,7 @@ etl_information_types,n_rows,bigint,Number of occurrences in [information_period
 etl_tables,table_name,text,Name of table,,x
 etl_tables,n_rows,bigint,Number of rows in table,,x
 etl_tables,n_patients,bigint,Number of unique patients table,,
-etl_tables,earliest_date,bigint,Earliest date found in table,,
-etl_tables,latest_date,bigint,Latest date found in table,,
+etl_tables,earliest_date,date,Earliest date found in table,,
+etl_tables,latest_date,date,Latest date found in table,,
 etl_vocabulary_ids,vocabulary_id,text,Vocabulary ID present,vocabularies,x
 etl_vocabulary_ids,n_rows,bigint,Number of occurrences in [clinical_codes](#clinical_codes),,x
