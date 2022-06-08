@@ -48,6 +48,10 @@ module Loadmop
         delimiter = "\t" if header_line =~ Regexp.new("\t")
         return CSV.parse_line(header_line, col_sep: delimiter).tap{ |o| p o }.map(&:to_sym), delimiter
       end
+
+      def headers_for_table(table_name)
+        headers_for(first_file_by_table_name(table_name))
+      end
     end
 
     class PathFiler < Filer
@@ -56,6 +60,14 @@ module Loadmop
 
       def files_of_interest
         lexicon_files.merge(data_files)
+      end
+
+      def first_file_by_table_name(table_name)
+        files_by_table_name[table_name.to_s].first
+      end
+
+      def files_by_table_name
+        @files_by_table_name ||= files_of_interest.map { |k, v| [k.basename('.*').to_s, v] }.to_h
       end
 
       def lexicon_files

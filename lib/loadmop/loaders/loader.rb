@@ -47,10 +47,10 @@ module Loadmop
 
       def provenance_columns
         {
-          oi_id: column_opts(:bigint),
-          oi_original_file: column_opts(:text),
-          source_field_generator: column_opts(:text),
-          source_table: column_opts(:text)
+          oi_id: column_opts(:bigint).dup,
+          oi_original_file: column_opts(:text).dup,
+          source_field_generator: column_opts(:text).dup,
+          source_table: column_opts(:text).dup
         }
       end
 
@@ -114,13 +114,13 @@ module Loadmop
 
       def create_tables
         s = self
-        prov_cols = self.provenance_columns
         data_model.dup.each do |table_name, table_info|
           logger.info "Creating table #{table_name}..."
           db.drop_table(table_name, drop_table_opts.merge(if_exists: true)) if force
           is_partitioned = check_if_partitioned(table_name)
+          optional_columns = optional_columns_for(table_name)
           db.create_table(send(table_name), create_table_options(table_name)) do
-            columns = Marshal.load(Marshal.dump(prov_cols)).merge(table_info[:columns])
+            columns = table_info[:columns].merge(optional_columns)
             columns.each do |column_name, column_options|
               primary = column_options.delete(:primary_key) if is_partitioned
               type = column_options.delete(:type)
@@ -132,6 +132,11 @@ module Loadmop
           post_create_table(table_name) if respond_to?(:post_create_table)
         end
         post_create_tables if respond_to?(:post_create_tables)
+      end
+
+      def optional_columns_for(table_name)
+        columns_from_header, _delimiter = data_filer.headers_for_table(table_name)
+        self.provenance_columns.select { |k, _| columns_from_header.include?(k) }
       end
 
       def create_table_options(table_name)
