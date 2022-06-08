@@ -221,6 +221,11 @@
     :comment: FK reference to [practitioners](#practitioners) table
     :foreign_key: practitioners
     :null: false
+  - :name: :patient_id
+    :type: :Bigint
+    :comment: FK reference to [patients](#patients) table
+    :foreign_key: patients
+    :null: false
   - :name: :role_type_concept_id
     :type: :Bigint
     :comment: FK reference to the [concepts](#concepts) table representing roles [practitioners](#practitioners)
@@ -803,4 +808,53 @@
     :type: :Bigint
     :comment: FK reference to [concepts](#concepts) table for the destination concept
     :foreign_key: concepts
+    :null: false
+- :name: :etl_info
+  :columns:
+  - :name: :key
+    :type: String
+    :comment: Name for the value
+    :null: false
+  - :name: :value
+    :type: String
+    :comment: Value
+- :name: :etl_information_types
+  :columns:
+  - :name: :information_type
+    :type: String
+    :comment: Information type
+    :null: false
+  - :name: :n
+    :type: :Bigint
+    :comment: Number of occurrences in [information_periods](#information_periods)
+    :null: false
+- :name: :etl_tables
+  :columns:
+  - :name: :table_name
+    :type: String
+    :comment: Name of table
+    :null: false
+  - :name: :n_rows
+    :type: :Bigint
+    :comment: Number of rows in table
+    :null: false
+  - :name: :n_patients
+    :type: :Bigint
+    :comment: Number of unique patients table
+  - :name: :earliest_date
+    :type: :Bigint
+    :comment: Earliest date found in table
+  - :name: :latest_date
+    :type: :Bigint
+    :comment: Latest date found in table
+- :name: :etl_vocabulary_ids
+  :columns:
+  - :name: :vocabulary_id
+    :type: String
+    :comment: Vocabulary ID present
+    :foreign_key: vocabularies
+    :null: false
+  - :name: :n
+    :type: :Bigint
+    :comment: Number of occurrences in [clinical_codes](#clinical_codes)
     :null: false

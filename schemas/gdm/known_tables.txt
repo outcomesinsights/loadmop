@@ -17,3 +17,7 @@ admission_details
 concepts
 vocabularies
 mappings
+etl_info
+etl_information_types
+etl_tables
+etl_vocabulary_ids

@@ -845,3 +845,52 @@
       :foreign_key: concepts
       :null: false
   :category: :lexicon
+:etl_info:
+  :columns:
+    :key:
+      :type: String
+      :comment: Name for the value
+      :null: false
+    :value:
+      :type: String
+      :comment: Value
+:etl_information_types:
+  :columns:
+    :information_type:
+      :type: String
+      :comment: Information type
+      :null: false
+    :n:
+      :type: :Bigint
+      :comment: Number of occurrences in [information_periods](#information_periods)
+      :null: false
+:etl_tables:
+  :columns:
+    :table_name:
+      :type: String
+      :comment: Name of table
+      :null: false
+    :n_rows:
+      :type: :Bigint
+      :comment: Number of rows in table
+      :null: false
+    :n_patients:
+      :type: :Bigint
+      :comment: Number of unique patients table
+    :earliest_date:
+      :type: :Bigint
+      :comment: Earliest date found in table
+    :latest_date:
+      :type: :Bigint
+      :comment: Latest date found in table
+:etl_vocabulary_ids:
+  :columns:
+    :vocabulary_id:
+      :type: String
+      :comment: Vocabulary ID present
+      :foreign_key: vocabularies
+      :null: false
+    :n:
+      :type: :Bigint
+      :comment: Number of occurrences in [clinical_codes](#clinical_codes)
+      :null: false
