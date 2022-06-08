@@ -860,7 +860,7 @@
       :type: String
       :comment: Information type
       :null: false
-    :n:
+    :n_rows:
       :type: :Bigint
       :comment: Number of occurrences in [information_periods](#information_periods)
       :null: false
@@ -890,7 +890,7 @@
       :comment: Vocabulary ID present
       :foreign_key: vocabularies
       :null: false
-    :n:
+    :n_rows:
       :type: :Bigint
       :comment: Number of occurrences in [clinical_codes](#clinical_codes)
       :null: false

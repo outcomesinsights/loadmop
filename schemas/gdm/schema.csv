@@ -166,11 +166,11 @@ mappings,concept_2_id,bigint,FK reference to [concepts](#concepts) table for the
 etl_info,key,text,Name for the value,,x
 etl_info,value,text,Value,,
 etl_information_types,information_type,text,Information type,,x
-etl_information_types,n,bigint,Number of occurrences in [information_periods](#information_periods),,x
+etl_information_types,n_rows,bigint,Number of occurrences in [information_periods](#information_periods),,x
 etl_tables,table_name,text,Name of table,,x
 etl_tables,n_rows,bigint,Number of rows in table,,x
 etl_tables,n_patients,bigint,Number of unique patients table,,
 etl_tables,earliest_date,bigint,Earliest date found in table,,
 etl_tables,latest_date,bigint,Latest date found in table,,
 etl_vocabulary_ids,vocabulary_id,text,Vocabulary ID present,vocabularies,x
-etl_vocabulary_ids,n,bigint,Number of occurrences in [clinical_codes](#clinical_codes),,x
+etl_vocabulary_ids,n_rows,bigint,Number of occurrences in [clinical_codes](#clinical_codes),,x
