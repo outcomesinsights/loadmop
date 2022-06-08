@@ -50,7 +50,9 @@ module Loadmop
       end
 
       def headers_for_table(table_name)
-        headers_for(first_file_by_table_name(table_name))
+        file = first_file_by_table_name(table_name)
+        return [[], nil] if file.nil?
+        headers_for(file)
       end
     end
 
@@ -63,7 +65,9 @@ module Loadmop
       end
 
       def first_file_by_table_name(table_name)
-        files_by_table_name[table_name.to_s].first
+        files = files_by_table_name[table_name.to_s]
+        return nil if files.nil?
+        files.first
       end
 
       def files_by_table_name
