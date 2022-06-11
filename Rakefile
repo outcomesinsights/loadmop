@@ -46,7 +46,7 @@ namespace :loadmop do
   ShellB.alias_command("dc", "docker-compose")
   ShellB.alias_command("dropbox_deployment", "dropbox-deployment")
   ShellB.alias_command("pg_dump_it", "pg_dump", *%w[--clean --quote-all-identifiers --no-owner --no-privileges --if-exists])
-  ShellB.alias_command("add_extensions", "cat", *%w[-] + pg_extensions)
+  ShellB.alias_command("add_extensions", "cat", *%w[-] + [pg_extensions])
   
   def dump_it(*pg_args)
     add_extensions(pg_dump_it(*pg_args))
