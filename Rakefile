@@ -31,19 +31,27 @@ POSTGRES_TEST_DATA_TAG = "outcomesinsights/misc:test_data.#{CURRENT_BRANCH}.post
 SQLITE_TEST_DATA_TAG = "outcomesinsights/misc:test_data.#{CURRENT_BRANCH}.sqlite.latest"
 
 namespace :loadmop do
+  schemas_dir = Pathname.new("schemas")
+  config_dir = Pathname.new("config")
+  pg_extensions = config_dir + "pg_extensions.sql"
+  temp_dir = Pathname.new("/tmp")
+  data_dir = temp_dir + "data"
+  artifacts_dir = temp_dir + "artifacts"
+  sql_schemas_dir = artifacts_dir + "sql"
+
   %w[bundle curl docker git mv pigz psql tar touch unzip].each do |cmd|
     ShellB.def_system_command(cmd)
   end
 
   ShellB.alias_command("dc", "docker-compose")
   ShellB.alias_command("dropbox_deployment", "dropbox-deployment")
-  ShellB.alias_command("dump_it", "pg_dump", *%w[--clean --quote-all-identifiers --no-owner --no-privileges --if-exists])
+  ShellB.alias_command("pg_dump_it", "pg_dump", *%w[--clean --quote-all-identifiers --no-owner --no-privileges --if-exists])
+  ShellB.alias_command("add_extensions", "cat", *%w[-] + pg_extensions)
+  
+  def dump_it(*pg_args)
+    add_extensions(pg_dump_it(*pg_args))
+  end
 
-  schemas_dir = Pathname.new("schemas")
-  temp_dir = Pathname.new("/tmp")
-  data_dir = temp_dir + "data"
-  artifacts_dir = temp_dir + "artifacts"
-  sql_schemas_dir = artifacts_dir + "sql"
 
   data_models = {
     gdm: {
