@@ -49,7 +49,7 @@ namespace :loadmop do
   ShellB.alias_command("add_extensions", "cat", *%w[-] + [pg_extensions])
   
   def dump_it(*pg_args)
-    add_extensions(pg_dump_it(*pg_args))
+    pg_dump_it(*pg_args) | add_extensions
   end
 
 
