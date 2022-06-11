@@ -25,6 +25,11 @@ module Loadmop
         (0...max_shard_number)
       end
 
+      def prepare_database
+        db.run("CREATE EXTENSION IF NOT EXISTS pg_trgm")
+        db.run("CREATE EXTENSION IF NOT EXISTS fuzzystrmatch")
+      end
+
       def post_create_table(table_name)
         return if ignore_table?(table_name)
 

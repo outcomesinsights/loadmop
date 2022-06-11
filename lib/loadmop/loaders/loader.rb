@@ -31,6 +31,7 @@ module Loadmop
       end
 
       def create_database
+        prepare_database
         create_schema_if_necessary
         create_tables if tables
         report_tables if tables
@@ -39,6 +40,9 @@ module Loadmop
         create_indexes if indexes && supports_indexes?
         create_primary_key_constraints if pk_constraints && supports_pk_constraints?
         create_foreign_key_constraints if fk_constraints && supports_fk_constraints?
+      end
+
+      def prepare_database
       end
 
       def data_model
