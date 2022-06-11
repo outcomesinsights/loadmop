@@ -33,6 +33,7 @@ module Loadmop
       def create_database
         create_schema_if_necessary
         create_tables if tables
+        post_create_tables if respond_to?(:post_create_tables)
         report_tables if tables
         load_files if data
         perform_load_post_processing if data
@@ -43,6 +44,7 @@ module Loadmop
       end
 
       def prepare_database
+        logger.info("Doing nothing in prepare_database")
       end
 
       def data_model
@@ -135,7 +137,6 @@ module Loadmop
           end
           post_create_table(table_name) if respond_to?(:post_create_table)
         end
-        post_create_tables if respond_to?(:post_create_tables)
       end
 
       def optional_columns_for(table_name)
