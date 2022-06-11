@@ -26,6 +26,7 @@ module Loadmop
       end
 
       def prepare_database
+        logger.info "Creating extensions..."
         db.run("CREATE EXTENSION IF NOT EXISTS pg_trgm")
         db.run("CREATE EXTENSION IF NOT EXISTS fuzzystrmatch")
       end
