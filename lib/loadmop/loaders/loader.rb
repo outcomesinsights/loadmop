@@ -254,7 +254,7 @@ module Loadmop
         if table_indices.is_a?(Hash)
           table_indices.each do |index_name, details|
             logger.info "Creating index '#{index_name}' for table #{table_name}..."
-            columns = details.delete(:columns).map(&:to_sym)
+            columns = details.delete(:columns)
             create_index(table_name, columns, { name: index_name }.merge(details))
           end
         else
@@ -281,13 +281,25 @@ module Loadmop
 
       def create_index(table_name, columns, details)
         elapsed = Benchmark.realtime do
-          begin
-            db.add_index(table_name, columns, details)
-          rescue Sequel::DatabaseError, PG::DuplicateTable, SQLite3::SQLException
-            logger.info $!.message
+          if columns.is_a?(String)
+            create_complex_index(table_name, columns, details)
+          else
+            create_simple_index(table_name, columns.map(&:to_sym), details)
           end
         end
         logger.info "Took #{elapsed}"
+      end
+
+      def create_simple_index(table_name, columns, details)
+        begin
+          db.add_index(table_name, columns, details)
+        rescue Sequel::DatabaseError, PG::DuplicateTable, SQLite3::SQLException
+          logger.info $!.message
+        end
+      end
+
+      def create_complex_index(table_name, expr, details)
+        db.run("CREATE INDEX IF NOT EXISTS #{Sequel[details[:name]]} ON #{Sequel[table_name]} USING #{expr}")
       end
 
       def method_missing(symbol, *args)
