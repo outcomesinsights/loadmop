@@ -271,13 +271,9 @@ module Loadmop
           end
         end
 
-        table_indices.select do |_, details|
+        table_indices.select do |details|
           index_allowed?(details[:columns])
         end.each(&block)
-      end
-
-      def hashify_table_indices(table_indices)
-
       end
 
       def process_columns(columns)
@@ -317,7 +313,7 @@ module Loadmop
       def create_complex_index(table_name, expr, details)
         create_index_sql = db[
           "CREATE INDEX IF NOT EXISTS ? ON ? USING ?",
-          Sequel.identifier(details[:name]]), Sequel.identifier(table_name), Sequel.lit(expr)
+          Sequel.identifier(details[:name]), Sequel.identifier(table_name), Sequel.lit(expr)
         ].sql
         logger.info "Creating complex index: '#{create_index_sql}'"
         db.run(create_index_sql)
