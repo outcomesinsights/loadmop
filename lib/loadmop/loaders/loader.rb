@@ -254,7 +254,7 @@ module Loadmop
         if table_indices.is_a?(Hash)
           table_indices.each do |index_name, details|
             logger.info "Creating index '#{index_name}' for table #{table_name}..."
-            columns = details.delete(:columns)
+            columns = process_columns(details.delete(:columns))
             create_index(table_name, columns, { name: index_name }.merge(details))
           end
         else
@@ -262,15 +262,20 @@ module Loadmop
             next unless index_allowed?(columns)
             #logger.debug columns.pretty_inspect
             details = columns.pop if columns.last.is_a?(Hash)
-            columns = columns.map do |column|
-              unless column.is_a?(Array)
-                column
-              else
-                Sequel.function(column.shift, *column)
-              end
-            end
+            columns = process_columns(columns)
             details ||= {}
             create_index(table_name, columns, details)
+          end
+        end
+      end
+
+      def process_columns(columns)
+        return columns if columns.is_a?(String)
+        columns.map do |column|
+          unless column.is_a?(Array)
+            column.to_sym
+          else
+            Sequel.function(column.shift, *column)
           end
         end
       end
@@ -284,7 +289,7 @@ module Loadmop
           if columns.is_a?(String)
             create_complex_index(table_name, columns, details)
           else
-            create_simple_index(table_name, columns.map(&:to_sym), details)
+            create_simple_index(table_name, columns, details)
           end
         end
         logger.info "Took #{elapsed}"
