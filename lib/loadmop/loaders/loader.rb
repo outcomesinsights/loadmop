@@ -251,22 +251,33 @@ module Loadmop
       end
 
       def create_idx(table_name, table_indices)
+        each_table_index(table_indices) do |details|
+          columns = process_columns(details.delete(:columns))
+          logger.info "Creating index ON #{table_name} USING #{columns}..."
+          create_index(table_name, columns, details)
+        end
+      end
+
+      def each_table_index(table_indices, &block)
         if table_indices.is_a?(Hash)
-          table_indices.each do |index_name, details|
-            logger.info "Creating index '#{index_name}' for table #{table_name}..."
-            columns = process_columns(details.delete(:columns))
-            create_index(table_name, columns, { name: index_name }.merge(details))
+          table_indices = table_indices.map do |index_name, details|
+            { name: index_name }.merge(details)
           end
         else
-          table_indices.each do |columns|
-            next unless index_allowed?(columns)
-            #logger.debug columns.pretty_inspect
+          table_indices = table_indices.map do |columns|
             details = columns.pop if columns.last.is_a?(Hash)
-            columns = process_columns(columns)
             details ||= {}
-            create_index(table_name, columns, details)
+            { columns: columns }.merge(details)
           end
         end
+
+        table_indices.select do |_, details|
+          index_allowed?(details[:columns])
+        end.each(&block)
+      end
+
+      def hashify_table_indices(table_indices)
+
       end
 
       def process_columns(columns)
@@ -304,7 +315,12 @@ module Loadmop
       end
 
       def create_complex_index(table_name, expr, details)
-        db.run("CREATE INDEX IF NOT EXISTS #{Sequel[details[:name]]} ON #{Sequel[table_name]} USING #{expr}")
+        create_index_sql = db[
+          "CREATE INDEX IF NOT EXISTS ? ON ? USING ?",
+          Sequel.identifier(details[:name]]), Sequel.identifier(table_name), Sequel.lit(expr)
+        ].sql
+        logger.info "Creating complex index: '#{create_index_sql}'"
+        db.run(create_index_sql)
       end
 
       def method_missing(symbol, *args)

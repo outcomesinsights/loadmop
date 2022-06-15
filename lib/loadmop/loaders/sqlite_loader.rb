@@ -30,7 +30,7 @@ module Loadmop
       end
 
       def index_allowed?(columns)
-        !columns.any? { |c| c.is_a?(Array) }
+        !columns.any? { |c| c.is_a?(Array) } || !columns.is_a?(String)
       end
 
       def run_sqlite_commands(*commands)
