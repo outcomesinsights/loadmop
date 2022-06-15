@@ -81,11 +81,13 @@ namespace :loadmop do
     },
     concepts: {
       category: :lexicon,
-      indexes: [
-        [:vocabulary_id, [:lower, :concept_text]],
-        [:vocabulary_id, [:lower, :concept_code]],
-        [:vocabulary_id, :concept_code]
-      ]
+      indexes: {
+        lower_concept_text_idx: { columns: [:vocabulary_id, [:lower, :concept_text]] },
+        lower_concept_code_idx: { columns: [:vocabulary_id, [:lower, :concept_code]] },
+        concept_code_idx: { columns: [:vocabulary_id, :concept_code] },
+        pg_search_idx: { columns: %Q{gin((to_tsvector('simple', coalesce("concepts"."concept_code"::text, '')) || to_tsvector('simple', coalesce("concepts"."concept_text"::text, ''))))} },
+        pg_search_suffix_idx: { columns: %Q{gin((to_tsvector('simple'::regconfig, reverse(COALESCE(concept_code, ''::text))) || to_tsvector('simple'::regconfig, reverse(COALESCE(concept_text, ''::text)))))} }
+      }
     },
     ancestors: {
       category: :lexicon
