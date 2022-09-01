@@ -3,7 +3,7 @@ name: Build GDM DBs
 on: [push]
 jobs:
   Run-Tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     environment: GDM Secrets
     steps:
       - name: Check out repository code
