@@ -11,7 +11,7 @@ libpq-dev \
 libsqlite3-dev \
 pass \
 pigz \
-postgresql-client \
+postgresql-client-14 \
 sqlite3 \
 zip \
 zstd \
