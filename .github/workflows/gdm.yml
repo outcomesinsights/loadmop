@@ -16,3 +16,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Build GDM DBs
         run: docker-compose run loadmop bundle exec rake loadmop:gdm:load loadmop:gdm:upload
+        env:
+          DROPBOX_OAUTH_BEARER: ${{ secrets.DROPBOX_OAUTH_BEARER }}
+          DOCKER_HUB_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKER_HUB_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
