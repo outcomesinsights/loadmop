@@ -1,12 +1,16 @@
-FROM ruby:2.6-slim
+FROM ruby:2.7-slim-bullseye
 
 RUN apt-get update && apt-get -y install \
+    curl ca-certificates gnupg2
+RUN curl https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+  | gpg --dearmor \
+  | tee /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg >/dev/null
+RUN echo "deb http://apt.postgresql.org/pub/repos/apt/ bullseye-pgdg main" > /etc/apt/sources.list.d/postgresql.list
+RUN apt-get update && apt-get -y install \
 build-essential \
-curl \
 docker \
 docker-compose \
 git \
-gnupg2 \
 libpq-dev \
 libsqlite3-dev \
 pass \
