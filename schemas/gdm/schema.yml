@@ -225,6 +225,11 @@
       :comment: FK reference to [practitioners](#practitioners) table
       :foreign_key: practitioners
       :null: false
+    :patient_id:
+      :type: :Bigint
+      :comment: FK reference to [patients](#patients) table
+      :foreign_key: patients
+      :null: false
     :role_type_concept_id:
       :type: :Bigint
       :comment: FK reference to the [concepts](#concepts) table representing roles
@@ -793,11 +798,23 @@
       :null: false
   :category: :lexicon
   :indexes:
-  - - :vocabulary_id
-    - - :lower
-      - :concept_text
-  - - :vocabulary_id
-    - :concept_code
+    :lower_concept_text_idx:
+      :columns:
+      - :vocabulary_id
+      - - :lower
+        - :concept_text
+    :lower_concept_code_idx:
+      :columns:
+      - :vocabulary_id
+      - - :lower
+        - :concept_code
+    :concept_code_idx:
+      :columns:
+      - :vocabulary_id
+      - :concept_code
+    :pg_search_idx:
+      :columns: gin((to_tsvector('simple', coalesce("concepts"."concept_code"::text,
+        '')) || to_tsvector('simple', coalesce("concepts"."concept_text"::text, ''))))
 :vocabularies:
   :columns:
     :id:
@@ -837,3 +854,52 @@
       :foreign_key: concepts
       :null: false
   :category: :lexicon
+:etl_info:
+  :columns:
+    :key:
+      :type: String
+      :comment: Name for the value
+      :null: false
+    :value:
+      :type: String
+      :comment: Value
+:etl_information_types:
+  :columns:
+    :information_type:
+      :type: String
+      :comment: Information type
+      :null: false
+    :n_rows:
+      :type: :Bigint
+      :comment: Number of occurrences in [information_periods](#information_periods)
+      :null: false
+:etl_tables:
+  :columns:
+    :table_name:
+      :type: String
+      :comment: Name of table
+      :null: false
+    :n_rows:
+      :type: :Bigint
+      :comment: Number of rows in table
+      :null: false
+    :n_patients:
+      :type: :Bigint
+      :comment: Number of unique patients table
+    :earliest_date:
+      :type: Date
+      :comment: Earliest date found in table
+    :latest_date:
+      :type: Date
+      :comment: Latest date found in table
+:etl_vocabulary_ids:
+  :columns:
+    :vocabulary_id:
+      :type: String
+      :comment: Vocabulary ID present
+      :foreign_key: vocabularies
+      :null: false
+    :n_rows:
+      :type: :Bigint
+      :comment: Number of occurrences in [clinical_codes](#clinical_codes)
+      :null: false

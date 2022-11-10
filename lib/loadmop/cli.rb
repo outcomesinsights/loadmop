@@ -50,20 +50,37 @@ module Loadmop
       type: :boolean,
       default: true,
       desc: "Create indexes"
+    class_option "primary-keys".to_sym,
+      aliases: :I,
+      type: :boolean,
+      default: true,
+      desc: "Create primary key constraints"
     class_option "foreign-keys".to_sym,
       aliases: :k,
       type: :boolean,
       default: true,
       desc: "Create foreign key constraints"
+    class_option "allow-nulls".to_sym,
+      aliases: :N,
+      type: :boolean,
+      default: false,
+      desc: "Create null constraints"
+    class_option "lines-per-split".to_sym,
+      aliases: :l,
+      type: :numeric,
+      default: 10000,
+      desc: "How many lines to attempt to load at a time"
 
     desc 'create {omopv4, omopv4_plus, gdm, vocab} database_name files_dir', 'Creates the tables specified in database_name and loads the files specified into them'
+    option :shards, type: :string, desc: "Comma delimited list of shard numbers, (e.g. 4,5,6) to load simultaneously"
+    option :partitioned, type: :boolean, default: false, desc: "Whether or not to create partitioned tables"
     def create(schema, database_name, files_dir)
       Loadmop.create_database(schema, database_name, files_dir, options)
     end
 
     desc 'ancestorize database_name', 'Creates the ancestors table and a couple helpful views'
     def ancestorize(database_name)
-      Loadmop.ancestorize(database_name)
+      Loadmop.ancestorize(database_name, options)
     end
 
     desc 'quick_index', 'Creates indexes on any column ending in _id'

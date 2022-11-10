@@ -47,6 +47,7 @@ collections,admission_detail_id,bigint,FK reference to [admission_details](#admi
 collections,collection_type_concept_id,bigint,FK reference to [concepts](#concepts) table representing the type of collection this record represents,concepts,
 contexts_practitioners,context_id,bigint,FK reference to [contexts](#contexts) table,contexts,x
 contexts_practitioners,practitioner_id,bigint,FK reference to [practitioners](#practitioners) table,practitioners,x
+contexts_practitioners,patient_id,bigint,FK reference to [patients](#patients) table,patients,x
 contexts_practitioners,role_type_concept_id,bigint,FK reference to the [concepts](#concepts) table representing roles [practitioners](#practitioners) can play in an encounter,concepts,
 contexts_practitioners,specialty_type_concept_id,bigint,FK reference to [concepts](#concepts) table representing the practitioner's specialty type for the services/diagnoses associated with this record,concepts,
 contexts,id,serial,Surrogate key for record,,x
@@ -162,3 +163,14 @@ vocabularies,is_clinical_vocabulary,boolean,Are concepts from this vocabulary st
 mappings,concept_1_id,bigint,FK reference to [concepts](#concepts) table for the source concept,concepts,x
 mappings,relationship_id,text,"The type or nature of the relationship (e.g., ""is_a"")",,x
 mappings,concept_2_id,bigint,FK reference to [concepts](#concepts) table for the destination concept,concepts,x
+etl_info,key,text,Name for the value,,x
+etl_info,value,text,Value,,
+etl_information_types,information_type,text,Information type,,x
+etl_information_types,n_rows,bigint,Number of occurrences in [information_periods](#information_periods),,x
+etl_tables,table_name,text,Name of table,,x
+etl_tables,n_rows,bigint,Number of rows in table,,x
+etl_tables,n_patients,bigint,Number of unique patients table,,
+etl_tables,earliest_date,date,Earliest date found in table,,
+etl_tables,latest_date,date,Latest date found in table,,
+etl_vocabulary_ids,vocabulary_id,text,Vocabulary ID present,vocabularies,x
+etl_vocabulary_ids,n_rows,bigint,Number of occurrences in [clinical_codes](#clinical_codes),,x

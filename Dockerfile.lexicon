@@ -1,4 +1,4 @@
-FROM postgres:9.6-alpine
+FROM postgres:14-alpine
 
 ENV LANG C.UTF-8
 ENV POSTGRES_DB=lexicon

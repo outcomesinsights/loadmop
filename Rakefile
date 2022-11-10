@@ -21,7 +21,7 @@ def download(url, dest_file)
   end
 end
 
-CURRENT_BRANCH = ENV["TRAVIS_BRANCH"] || "chisel"
+CURRENT_BRANCH = ENV["GITHUB_REF_NAME"] || ENV["TRAVIS_BRANCH"] || "chisel"
 
 LEXICON_PG_URL = ENV["LEXICON_PG_URL"] || "postgres://ryan:r@lexicon/lexicon"
 
@@ -31,19 +31,27 @@ POSTGRES_TEST_DATA_TAG = "outcomesinsights/misc:test_data.#{CURRENT_BRANCH}.post
 SQLITE_TEST_DATA_TAG = "outcomesinsights/misc:test_data.#{CURRENT_BRANCH}.sqlite.latest"
 
 namespace :loadmop do
+  schemas_dir = Pathname.new("schemas")
+  config_dir = Pathname.new("config")
+  pg_extensions = config_dir + "pg_extensions.sql"
+  temp_dir = Pathname.new("/tmp")
+  data_dir = temp_dir + "data"
+  artifacts_dir = temp_dir + "artifacts"
+  sql_schemas_dir = artifacts_dir + "sql"
+
   %w[bundle curl docker git mv pigz psql tar touch unzip].each do |cmd|
     ShellB.def_system_command(cmd)
   end
 
   ShellB.alias_command("dc", "docker-compose")
   ShellB.alias_command("dropbox_deployment", "dropbox-deployment")
-  ShellB.alias_command("dump_it", "pg_dump", *%w[--clean --quote-all-identifiers --no-owner --no-privileges --if-exists])
+  ShellB.alias_command("pg_dump_it", "pg_dump", *%w[--clean --quote-all-identifiers --no-owner --no-privileges --if-exists])
+  ShellB.alias_command("add_extensions", "cat", *%w[-] + [pg_extensions])
+  
+  def dump_it(*pg_args)
+    pg_dump_it(*pg_args) | add_extensions
+  end
 
-  schemas_dir = Pathname.new("schemas")
-  temp_dir = Pathname.new("/tmp")
-  data_dir = temp_dir + "data"
-  artifacts_dir = temp_dir + "artifacts"
-  sql_schemas_dir = artifacts_dir + "sql"
 
   data_models = {
     gdm: {
@@ -73,10 +81,13 @@ namespace :loadmop do
     },
     concepts: {
       category: :lexicon,
-      indexes: [
-        [:vocabulary_id, [:lower, :concept_text]],
-        [:vocabulary_id, :concept_code]
-      ]
+      indexes: {
+        lower_concept_text_idx: { columns: [:vocabulary_id, [:lower, :concept_text]] },
+        lower_concept_code_idx: { columns: [:vocabulary_id, [:lower, :concept_code]] },
+        concept_code_idx: { columns: [:vocabulary_id, :concept_code] },
+        pg_search_idx: { columns: %Q{gin((to_tsvector('simple', coalesce("concepts"."concept_code"::text, '')) || to_tsvector('simple', coalesce("concepts"."concept_text"::text, ''))))} },
+        pg_search_suffix_idx: { columns: %Q{gin((to_tsvector('simple'::regconfig, reverse(COALESCE(concept_code, ''::text))) || to_tsvector('simple'::regconfig, reverse(COALESCE(concept_text, ''::text)))))} }
+      }
     },
     ancestors: {
       category: :lexicon
