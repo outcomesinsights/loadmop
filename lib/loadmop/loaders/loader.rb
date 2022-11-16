@@ -37,6 +37,7 @@ module Loadmop
         report_tables if tables
         load_files if data
         perform_load_post_processing if data
+        aggregate_tables_if_necessary if data
         create_indexes if indexes && supports_indexes?
         create_primary_key_constraints if pk_constraints && supports_pk_constraints?
         create_foreign_key_constraints if fk_constraints && supports_fk_constraints?
@@ -63,6 +64,37 @@ module Loadmop
       private
 
       def perform_load_post_processing
+      end
+
+      def aggregate_tables_if_necessary
+        data_model.each do |table, table_info|
+          aggregators = table_info[:aggregators]
+
+          next unless aggregators
+
+          table_n = table_name(table)
+          if aggregators[:all]
+            replace_table_contents(table_n, db[table_n].distinct.to_a)
+          end
+
+          group_by_column = aggregators[:group_by]
+          if group_by_column
+            ds = db[table_n].select_group(group_by_column.to_sym).order(group_by_column.to_sym)
+            aggregators.each do |col, func|
+              next if col == :group_by
+              col = col.to_sym
+              ds = ds.select_append(Sequel.function(func, col).as(col))
+            end
+            replace_table_contents(table_n, ds.to_a)
+          end
+        end
+      end
+
+      def replace_table_contents(table_n, results)
+        db[table_n].truncate
+        results.each do |result|
+          db[table_n].insert(result)
+        end
       end
 
       def report_tables

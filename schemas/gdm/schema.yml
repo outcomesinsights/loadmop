@@ -863,6 +863,8 @@
     :value:
       :type: String
       :comment: Value
+  :aggregators:
+    :all: distinct
 :etl_information_types:
   :columns:
     :information_type:
@@ -873,6 +875,9 @@
       :type: :Bigint
       :comment: Number of occurrences in [information_periods](#information_periods)
       :null: false
+  :aggregators:
+    :group_by: information_type
+    :n_rows: sum
 :etl_tables:
   :columns:
     :table_name:
@@ -892,6 +897,12 @@
     :latest_date:
       :type: Date
       :comment: Latest date found in table
+  :aggregators:
+    :group_by: table_name
+    :n_rows: sum
+    :n_patients: sum
+    :earliest_date: min
+    :latest_date: max
 :etl_vocabulary_ids:
   :columns:
     :vocabulary_id:
@@ -903,3 +914,6 @@
       :type: :Bigint
       :comment: Number of occurrences in [clinical_codes](#clinical_codes)
       :null: false
+  :aggregators:
+    :group_by: vocabulary_id
+    :n_rows: sum
