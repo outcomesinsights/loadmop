@@ -1,6 +1,8 @@
 ---
 name: Build GDM DBs
-on: [push]
+on:
+  workflow_dispatch:
+  push:
 jobs:
   Run-Tests:
     runs-on: ubuntu-22.04
