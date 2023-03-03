@@ -3,6 +3,7 @@ require 'loadmop/ancestorizer'
 require 'loadmop/gdm_full_indexer'
 require 'loadmop/quick_indexer'
 require 'loadmop/test_schema_zapper'
+require 'loadmop/loaders/loader'
 require 'facets/kernel/constant'
 require 'sequelizer'
 
