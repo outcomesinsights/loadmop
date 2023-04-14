@@ -815,6 +815,10 @@
     :pg_search_idx:
       :columns: gin((to_tsvector('simple', coalesce("concepts"."concept_code"::text,
         '')) || to_tsvector('simple', coalesce("concepts"."concept_text"::text, ''))))
+    :pg_search_suffix_idx:
+      :columns: gin((to_tsvector('simple'::regconfig, reverse(COALESCE(concept_code,
+        ''::text))) || to_tsvector('simple'::regconfig, reverse(COALESCE(concept_text,
+        ''::text)))))
 :vocabularies:
   :columns:
     :id:

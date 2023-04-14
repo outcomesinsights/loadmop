@@ -38,53 +38,6 @@
       :type: String
       :comment: Originial patient identifier defined in the source data
       :null: false
-:patient_details:
-  :columns:
-    :id:
-      :type: :Bigint
-      :primary_key: true
-      :comment: Surrogate key for record
-      :null: false
-    :patient_id:
-      :type: :Bigint
-      :comment: FK reference to [patients](#patients) table
-      :foreign_key: patients
-      :null: false
-    :start_date:
-      :type: Date
-      :comment: Start date of record (yyyy-mm-dd)
-      :null: false
-    :end_date:
-      :type: Date
-      :comment: Start date of record (yyyy-mm-dd)
-    :value_as_number:
-      :type: Float
-      :comment: The patient detail result stored as a number, applicable to patient
-        detail where the result is expressed as a numeric value
-    :value_as_string:
-      :type: String
-      :comment: The patient detail result stored as a string, applicable to patient
-        details where the result is expressed as verbatim text
-    :value_as_concept_id:
-      :type: :Bigint
-      :comment: FK reference to [concepts](#concepts) table for the result associated
-        with the patient detail
-      :foreign_key: concepts
-    :patient_detail_concept_id:
-      :type: :Bigint
-      :comment: FK reference to [concepts](#concepts) table for the code assigned
-        to the record
-      :foreign_key: concepts
-      :null: false
-    :patient_detail_source_value:
-      :type: String
-      :comment: Source code from raw data
-      :null: false
-    :patient_detail_vocabulary_id:
-      :type: String
-      :comment: Vocabulary the patient detail comes from
-      :foreign_key: vocabularies
-      :null: false
 :practitioners:
   :columns:
     :id:
